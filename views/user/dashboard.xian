@@ -1,0 +1,173 @@
+{{> head }}
+
+<!-- 
+  This body tag applies the sticky footer layout.
+  The background is set to a light gray for a professional dashboard feel.
+-->
+<body class="flex flex-col min-h-screen bg-gray-100">
+
+  <!-- Dashboard Navigation -->
+  <nav class="bg-white shadow-sm border-b border-gray-200">
+    <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+      
+      <!-- Logo / Project Title -->
+      <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+        </svg>
+        <span class="text-xl font-bold text-gray-800">R3-Cycle Dashboard</span>
+      </div>
+      
+      <!-- User Menu -->
+      <div class="flex items-center gap-4">
+        <span class="text-gray-600 hidden sm:inline">Welcome, <span class="font-medium text-gray-800">{{user.name}}</span>!</span>
+        
+        <!-- User Icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        
+        <a href="/logout" class="text-sm text-red-600 font-medium hover:underline">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content Area -->
+  <main class="flex-grow">
+    <div class="container mx-auto px-4 py-8">
+
+      <!-- "At a Glance" Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <!-- Card 1: Current Points -->
+        <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out">
+          <div class="flex justify-between items-start">
+            <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Current Points</h3>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01M12 12v.01M12 12v-2m0 2c1.657 0 3-.895 3-2s-1.343-2-3-2m0 8c-1.11 0-2.08-.402-2.599-1M12 16v.01M12 16v1m0-1v-2m0 0c-1.657 0-3 .895-3 2s1.343 2 3 2m0-8c-1.11 0-2.08.402-2.599-1M12 4v.01M12 4V3" />
+            </svg>
+          </div>
+          <p class="mt-2 text-5xl font-bold text-green-600">
+            {{user.points}}
+          </p>
+          <p class="mt-1 text-sm text-gray-500">Ready to redeem!</p>
+        </div>
+
+        <!-- Card 2: Total Paper Recycled -->
+        <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out">
+          <div class="flex justify-between items-start">
+            <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Paper Recycled</h3>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H7a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+          </div>
+          <p class="mt-2 text-5xl font-bold text-gray-800">
+            {{stats.totalWeight}} <span class="text-3xl font-medium text-gray-500">grams</span>
+          </p>
+          <p class="mt-1 text-sm text-gray-500">Great job!</p>
+        </div>
+
+        <!-- Card 3: Rewards Redeemed -->
+        <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out">
+          <div class="flex justify-between items-start">
+            <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Rewards Redeemed</h3>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-4 0 4 4 0 014 0z" />
+            </svg>
+          </div>
+          <p class="mt-2 text-5xl font-bold text-gray-800">
+            {{stats.totalRedeemed}}
+          </p>
+          <p class="mt-1 text-sm text-gray-500">Total items claimed</p>
+        </div>
+      </div>
+
+      <!-- Main Dashboard Area (2-column layout) -->
+      <div class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Column 1: Redeem Rewards -->
+        <div class="lg:col-span-1">
+          <h2 class="text-2xl font-bold text-gray-800">Redeem Rewards</h2>
+          <div class="mt-4 space-y-4">
+            
+            <!-- Loop over available rewards -->
+            {{#each rewards}}
+            <div class="bg-white p-5 rounded-xl shadow-lg flex items-center justify-between hover:shadow-xl transition-shadow duration-300 ease-in-out">
+              <div>
+                <p class="font-medium text-gray-800">{{this.name}}</p>
+                <p class="text-sm text-gray-500">Cost: <span class="font-bold text-green-600">{{this.cost}} Points</span></p>
+              </div>
+              
+              <!-- 
+                This button will be styled as 'disabled' if it has the disabled attribute.
+                Add logic (Handlebars helper or JS) to add 'disabled' if user.points < this.cost
+              -->
+              <button class="py-2 px-4 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Redeem
+              </button>
+            </div>
+            {{else}}
+            <!-- Show this if there are no rewards to redeem -->
+            <div class="bg-white p-5 rounded-xl shadow-lg text-center text-gray-500">
+              No rewards available to redeem right now.
+            </div>
+            {{/each}}
+            
+          </div>
+        </div>
+
+        <!-- Column 2: Transaction History -->
+        <div class="lg:col-span-2">
+          <h2 class="text-2xl font-bold text-gray-800">Transaction History</h2>
+          
+          <!-- History Table -->
+          <div class="bg-white rounded-xl shadow-lg mt-4 overflow-hidden">
+            <table class="w-full">
+              <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight (g)</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                
+                <!-- Loop over each transaction -->
+                {{#each transactions}}
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{this.date}}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{this.weight}}g</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">+{{this.points}}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      {{this.status}}
+                    </span>
+                  </td>
+                </tr>
+                {{else}}
+                <!-- Show this if there are no transactions -->
+                <tr>
+                  <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                    You have no transactions yet. Start recycling!
+                  </td>
+                </tr>
+                {{/each}}
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </main>
+
+  <!-- Sticky Footer -->
+  {{> myFooter }}
+
+</body>
+</html>

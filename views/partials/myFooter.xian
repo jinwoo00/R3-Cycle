@@ -1,0 +1,39 @@
+<!-- 
+  This is your footer partial file.
+  The </body> and </html> tags are typically in your main layout file, 
+  not in the partial, but I've kept them here to match your example.
+-->
+
+<!-- 
+  - Added 'border-t' for a clean separator line.
+  - Added 'bg-gray-100' for a subtle background color.
+  - Added 'container mx-auto px-6' to manage width and padding.
+  - Added 'md:flex md:justify-between md:items-center' to create the 
+    responsive two-column layout on medium (md) screens and up.
+-->
+<footer class="mt-8 border-t border-gray-200 bg-gray-100">
+  <div class="container mx-auto px-6 py-6 text-center text-sm text-black-600 md:flex md:items-center md:justify-between">
+    
+    <!-- 
+      This block will be on top on mobile.
+      On desktop (md:), it will be on the left.
+      - 'mb-2 md:mb-0' adds space on mobile only.
+      - 'md:text-left' aligns text left on desktop.
+    -->
+    <div class="mb-2 md:mb-0 md:text-left">
+      &copy; 2025 | An IoT-Enabled Recycling Solution by XianFire
+    </div>
+    
+    <!-- 
+      This block will be on the bottom on mobile.
+      On desktop (md:), it will be on the right.
+      - 'md:text-right' aligns text right on desktop.
+    -->
+    <div class="md:text-right">
+      Mindoro State University – College of Information Technology
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
