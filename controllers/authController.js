@@ -30,7 +30,7 @@ import {
   signInWithEmailAndPassword,
   signOut
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export const loginPage = (req, res) => res.render("login", { title: "Login" });
 export const registerPage = (req, res) => res.render("register", { title: "Register" });
@@ -42,26 +42,49 @@ export const dashboardPage = (req, res) => {
 
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
+  console.log("Login attempt:", email, password); // 👈 check if these appear in console
+
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    req.session.userId = userCredential.user.uid;
-    res.redirect("/dashboard");
+    const user = userCredential.user;
+    console.log("Firebase login success:", user.uid);
+
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      console.log("User role:", userData.role);
+
+      req.session.userId = user.uid;
+      req.session.userRole = userData.role;
+
+      if (userData.role === "admin") {
+        return res.redirect("/adminDashboard.xian");
+      } else {
+        return res.redirect("/dashboard");
+      }
+    } else {
+      console.log("User Firestore doc not found");
+      res.send("User data not found.");
+    }
   } catch (error) {
-    console.error("Login error:", error.message);
+    console.error("Login error:", error.code, error.message);
     res.send("Login failed: " + error.message);
   }
 };
 
+
 export const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, role } = req.body; // include role (optional)
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Save additional user data to Firestore
+    // Save user info with role (default: 'user')
     await setDoc(doc(db, "users", user.uid), {
       name,
       email,
+      role: role || "user", // defaults to user if not specified
       createdAt: new Date()
     });
 
@@ -72,6 +95,7 @@ export const registerUser = async (req, res) => {
     res.send("Registration failed: " + error.message);
   }
 };
+
 
 export const logoutUser = async (req, res) => {
   try {

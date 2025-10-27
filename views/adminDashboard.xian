@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paper Recycling Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .alert-badge {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+<header class="bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg">
+  <div class="max-w-7xl mx-auto px-6 py-6">
+    <div class="flex items-center justify-between">
+      <!-- Left side: logo + title -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+          <span class="text-green-600 font-bold text-lg">♻</span>
+        </div>
+        <div>
+          <h1 class="text-3xl font-bold">Paper Recycling Admin Dashboard</h1>
+          <p class="text-sm text-green-100">3 Used Papers = 1 Coupon Bond</p>
+        </div>
+      </div>
+
+      <!-- Right side: last updated + logout -->
+      <div class="flex items-center gap-4 text-sm text-green-100">
+        <div>
+          Last updated: <span id="currentTime">--:--</span>
+        </div>
+        <a href="/logout" class="text-red-300 font-medium hover:text-red-500 hover:underline transition">
+          Logout
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Key Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+                <div class="text-gray-600 text-sm font-semibold mb-2">Total Papers Recycled</div>
+                <div class="text-3xl font-bold text-green-600" id="totalPapers">7,350</div>
+                <div class="text-xs text-gray-500 mt-2">↑ 15% from last week</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+                <div class="text-gray-600 text-sm font-semibold mb-2">Coupon Bonds Issued</div>
+                <div class="text-3xl font-bold text-blue-600" id="couponBonds">2,450</div>
+                <div class="text-xs text-gray-500 mt-2">↑ 12% from last week</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
+                <div class="text-gray-600 text-sm font-semibold mb-2">Active Users</div>
+                <div class="text-3xl font-bold text-purple-600" id="activeUsers">1,284</div>
+                <div class="text-xs text-gray-500 mt-2">↑ 8% from last week</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-orange-500">
+                <div class="text-gray-600 text-sm font-semibold mb-2">Pending Alerts</div>
+                <div class="text-3xl font-bold text-orange-600 alert-badge" id="pendingAlerts">3</div>
+                <div class="text-xs text-gray-500 mt-2">Requires attention</div>
+            </div>
+        </div>
+
+        <!-- Alerts Section -->
+        <div class="bg-white rounded-lg shadow mb-8">
+            <div class="border-b border-gray-200 px-6 py-4">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <span class="text-orange-500">⚠</span> Active Alerts
+                </h2>
+            </div>
+            <div class="p-6 space-y-3" id="alertsContainer">
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded flex items-start justify-between">
+                    <div>
+                        <div class="font-semibold text-red-800">Reward Paper Low</div>
+                        <div class="text-sm text-red-700">Machine #5 - Coupon bond paper stock at 12%</div>
+                        <div class="text-xs text-red-600 mt-1">Alert time: 2:45 PM</div>
+                    </div>
+                    <button class="text-red-600 hover:text-red-800 font-semibold text-sm">Dismiss</button>
+                </div>
+                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded flex items-start justify-between">
+                    <div>
+                        <div class="font-semibold text-yellow-800">Printer Ink Low</div>
+                        <div class="text-sm text-yellow-700">Machine #12 - Ink level at 18% (for coupon printing)</div>
+                        <div class="text-xs text-yellow-600 mt-1">Alert time: 1:30 PM</div>
+                    </div>
+                    <button class="text-yellow-600 hover:text-yellow-800 font-semibold text-sm">Dismiss</button>
+                </div>
+                <div class="bg-orange-50 border-l-4 border-orange-500 p-4 rounded flex items-start justify-between">
+                    <div>
+                        <div class="font-semibold text-orange-800">Machine Offline</div>
+                        <div class="text-sm text-orange-700">Machine #18 - No connection for 45 minutes</div>
+                        <div class="text-xs text-orange-600 mt-1">Alert time: 12:15 PM</div>
+                    </div>
+                    <button class="text-orange-600 hover:text-orange-800 font-semibold text-sm">Dismiss</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Machine Activity -->
+            <div class="lg:col-span-2 bg-white rounded-lg shadow">
+                <div class="border-b border-gray-200 px-6 py-4">
+                    <h2 class="text-xl font-bold text-gray-800">Machine Activity & Paper Stock</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Machine ID</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Coupon Paper Stock</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Printer Ink</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Last Activity</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">#1</td>
+                                <td class="px-6 py-4 text-sm"><span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">Online</span></td>
+                                <td class="px-6 py-4 text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-24 bg-gray-200 rounded-full h-2">
+                                            <div class="bg-green-500 h-2 rounded-full" style="width: 85%"></div>
+                                        </div>
+                                        <span class="text-xs text-gray-600">85%</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-24 bg-gray-200 rounded-full h-2">
+                                            <div class="bg-green-500 h-2 rounded-full" style="width: 90%"></div>
+                                        </div>
+                                        <span class="text-xs text-gray-600">90%</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600">2 min ago</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">#5</td>
+                                <td class="px-6 py-4 text-sm"><span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">Online</span></td>
+                                <td class="px-6 py-4 text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-24 bg-gray-200 rounded-full h-2">
+                                            <div class="bg-red-500 h-2 rounded-full" style="width: 12%"></div>
+                                        </div>
+                                        <span class="text-xs text-gray-600">12%</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-24 bg-gray-200 rounded-full h-2">
+                                            <div class="bg-green-500 h-2 rounded-full" style="width: 75%"></div>
+                                        </div>
+                                        <span class="text-xs text-gray-600">75%</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600">5 min ago</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">#12</td>
+                                <td class="px-6 py-4 text-sm"><span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">Online</span></td>
+                                <td class="px-6 py-4 text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-24 bg-gray-200 rounded-full h-2">
+                                            <div class="bg-green-500 h-2 rounded-full" style="width: 60%"></div>
+                                        </div>
+                                        <span class="text-xs text-gray-600">60%</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-24 bg-gray-200 rounded-full h-2">
+                                            <div class="bg-yellow-500 h-2 rounded-full" style="width: 18%"></div>
+                                        </div>
+                                        <span class="text-xs text-gray-600">18%</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600">1 min ago</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">#18</td>
+                                <td class="px-6 py-4 text-sm"><span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">Offline</span></td>
+                                <td class="px-6 py-4 text-sm text-gray-500">--</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">--</td>
+                                <td class="px-6 py-4 text-sm text-gray-600">45 min ago</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Points Management -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="border-b border-gray-200 px-6 py-4">
+                    <h2 class="text-xl font-bold text-gray-800">Manage User Points</h2>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">User ID</label>
+                        <input type="text" placeholder="Enter user ID" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" id="userIdInput">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Current Points</label>
+                        <div class="px-4 py-2 bg-gray-100 rounded-lg text-lg font-bold text-gray-800" id="currentPoints">0</div>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <div class="text-xs font-semibold text-blue-700 mb-1">Coupon Bond Progress</div>
+                        <div class="text-sm text-blue-600" id="couponProgress">0 / 3 papers</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Points Adjustment</label>
+                        <div class="flex gap-2">
+                            <input type="number" placeholder="Amount" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" id="pointsAmount">
+                            <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" id="pointsAction">
+                                <option value="add">Add</option>
+                                <option value="remove">Remove</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Reason</label>
+                        <input type="text" placeholder="e.g., Bonus, Correction" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" id="pointsReason">
+                    </div>
+                    <button onclick="adjustPoints()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition">
+                        Apply Adjustment
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Logs -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="border-b border-gray-200 px-6 py-4">
+                <h2 class="text-xl font-bold text-gray-800">User Activity Logs - Paper Recycling</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">User ID</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Papers Recycled</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Coupon Bonds Earned</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Total Weight (kg)</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">USR-001</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">John Smith</td>
+                            <td class="px-6 py-4 text-sm"><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">9 papers</span></td>
+                            <td class="px-6 py-4 text-sm font-semibold text-green-600">3 bonds</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">5.2 kg</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">Today 2:30 PM</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">USR-042</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">Sarah Johnson</td>
+                            <td class="px-6 py-4 text-sm"><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">6 papers</span></td>
+                            <td class="px-6 py-4 text-sm font-semibold text-green-600">2 bonds</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">3.8 kg</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">Today 2:15 PM</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">USR-156</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">Mike Chen</td>
+                            <td class="px-6 py-4 text-sm"><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">12 papers</span></td>
+                            <td class="px-6 py-4 text-sm font-semibold text-green-600">4 bonds</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">7.1 kg</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">Today 1:45 PM</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">USR-203</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">Emma Davis</td>
+                            <td class="px-6 py-4 text-sm"><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">15 papers</span></td>
+                            <td class="px-6 py-4 text-sm font-semibold text-green-600">5 bonds</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">8.5 kg</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">Today 1:20 PM</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">USR-089</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">Alex Rodriguez</td>
+                            <td class="px-6 py-4 text-sm"><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">3 papers</span></td>
+                            <td class="px-6 py-4 text-sm font-semibold text-green-600">1 bond</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">1.8 kg</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">Today 12:50 PM</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Simulate user points lookup
+        document.getElementById('userIdInput').addEventListener('change', function() {
+            const userId = this.value;
+            if (userId) {
+                // Simulate fetching user points
+                const points = Math.floor(Math.random() * 5000) + 100;
+                document.getElementById('currentPoints').textContent = points;
+                // Calculate coupon bond progress (3 papers = 1 bond)
+                const papersCount = points % 3;
+                document.getElementById('couponProgress').textContent = `${papersCount} / 3 papers`;
+            }
+        });
+
+        // Adjust points function
+        function adjustPoints() {
+            const userId = document.getElementById('userIdInput').value;
+            const amount = parseInt(document.getElementById('pointsAmount').value);
+            const action = document.getElementById('pointsAction').value;
+            const reason = document.getElementById('pointsReason').value;
+
+            if (!userId || !amount || !reason) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const currentPoints = parseInt(document.getElementById('currentPoints').textContent);
+            const newPoints = action === 'add' ? currentPoints + amount : currentPoints - amount;
+
+            if (newPoints < 0) {
+                alert('Cannot remove more points than user has');
+                return;
+            }
+
+            // Update display
+            document.getElementById('currentPoints').textContent = newPoints;
+            // Update coupon bond progress display
+            const papersCount = newPoints % 3;
+            document.getElementById('couponProgress').textContent = `${papersCount} / 3 papers`;
+
+            // Show confirmation
+            alert(`✓ Successfully ${action === 'add' ? 'added' : 'removed'} ${amount} papers to ${userId}\nReason: ${reason}\nNew total: ${newPoints} papers\nCoupon bonds earned: ${Math.floor(newPoints / 3)}`);
+
+            // Reset form
+            document.getElementById('pointsAmount').value = '';
+            document.getElementById('pointsReason').value = '';
+        }
+
+        // Dismiss alert functionality
+        document.querySelectorAll('button').forEach(btn => {
+            if (btn.textContent === 'Dismiss') {
+                btn.addEventListener('click', function() {
+                    this.closest('div').style.opacity = '0.5';
+                    this.closest('div').style.textDecoration = 'line-through';
+                    this.disabled = true;
+                });
+            }
+        });
+    </script>
+</body>
+</html>

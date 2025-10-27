@@ -27,10 +27,22 @@
 import express from "express";
 import { homePage } from "../controllers/homeController.js";
 const router = express.Router();
+
+// Home route
 router.get("/", homePage);
 
-import { loginPage, registerPage, forgotPasswordPage, dashboardPage, loginUser, registerUser, logoutUser } from "../controllers/authController.js";
+// Import authentication controllers
+import {
+  loginPage,
+  registerPage,
+  forgotPasswordPage,
+  dashboardPage,
+  loginUser,
+  registerUser,
+  logoutUser
+} from "../controllers/authController.js";
 
+// Authentication routes
 router.get("/login", loginPage);
 router.post("/login", loginUser);
 router.get("/register", registerPage);
@@ -38,5 +50,15 @@ router.post("/register", registerUser);
 router.get("/forgot-password", forgotPasswordPage);
 router.get("/dashboard", dashboardPage);
 router.get("/logout", logoutUser);
+
+// ✅ Add admin dashboard route here
+router.get("/adminDashboard.xian", (req, res) => {
+  // Optional: prevent direct access unless logged in as admin
+  if (!req.session.userRole || req.session.userRole !== "admin") {
+    return res.redirect("/login");
+  }
+
+  res.render("adminDashboard.xian", { title: "Admin Dashboard" });
+});
 
 export default router;
