@@ -31,6 +31,50 @@ import {
   signOut
 } from "firebase/auth";
 import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+import crypto from "crypto";
+import { sendVerificationCodeEmail as sendCodeEmail } from "../models/emailConfig.js";
+
+// ============================================
+// HELPER FUNCTIONS FOR VERIFICATION CODES
+// ============================================
+
+/**
+ * Generate a random 6-digit verification code
+ */
+function generateVerificationCode() {
+  return crypto.randomInt(100000, 999999).toString();
+}
+
+/**
+ * Send verification code via email using Nodemailer
+ */
+async function sendVerificationCodeEmail(email, code, userName) {
+  try {
+    // Use the real email sender from emailConfig.js
+    await sendCodeEmail(email, code, userName);
+
+    // Also log to console for debugging
+    console.log("=".repeat(50));
+    console.log("📧 VERIFICATION CODE EMAIL SENT");
+    console.log("=".repeat(50));
+    console.log(`To: ${email}`);
+    console.log(`User: ${userName}`);
+    console.log(`Code: ${code}`);
+    console.log(`Expires: 10 minutes`);
+    console.log("=".repeat(50));
+  } catch (error) {
+    console.error("❌ Failed to send verification email:", error.message);
+    // Still log the code to console as fallback
+    console.log("⚠️ FALLBACK - Code logged to console (email failed):");
+    console.log(`   To: ${email}`);
+    console.log(`   Code: ${code}`);
+    throw error; // Re-throw so caller knows it failed
+  }
+}
+
+// ============================================
+// PAGE CONTROLLERS
+// ============================================
 
 export const loginPage = (req, res) => res.render("login", { title: "Login" });
 export const registerPage = (req, res) => res.render("register", { title: "Register" });
@@ -57,6 +101,11 @@ export const dashboardPage = async (req, res) => {
       // Check if email is verified
       const emailVerified = currentUser ? currentUser.emailVerified : false;
 
+      // Redirect to verification page if email is not verified
+      if (!emailVerified) {
+        return res.redirect("/verification-required");
+      }
+
       res.render("user/dashboard", {
         title: "Dashboard",
         emailVerified: emailVerified,
@@ -68,6 +117,40 @@ export const dashboardPage = async (req, res) => {
     }
   } catch (error) {
     console.error("Dashboard error:", error.message);
+    res.redirect("/login");
+  }
+};
+
+export const verificationRequiredPage = async (req, res) => {
+  if (!req.session.userId) return res.redirect("/login");
+
+  try {
+    // Get current user from Firebase Auth
+    const currentUser = auth.currentUser;
+
+    // If already verified, redirect to dashboard
+    if (currentUser && currentUser.emailVerified) {
+      return res.redirect("/dashboard");
+    }
+
+    // Get user data from Firestore
+    const userDoc = await getDoc(doc(db, "users", req.session.userId));
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+
+      res.render("verification-required", {
+        title: "Email Verification Required",
+        userEmail: userData.email,
+        userName: userData.name,
+        success_msg: req.flash("success_msg"),
+        error_msg: req.flash("error_msg")
+      });
+    } else {
+      res.redirect("/login");
+    }
+  } catch (error) {
+    console.error("Verification page error:", error.message);
     res.redirect("/login");
   }
 };
@@ -88,15 +171,54 @@ export const loginUser = async (req, res) => {
       const userData = userDoc.data();
       console.log("User role:", userData.role);
 
+      // Store basic session info
       req.session.userId = user.uid;
       req.session.userRole = userData.role;
       req.session.emailVerified = user.emailVerified;
 
-      if (userData.role === "admin") {
-        return res.redirect("/adminDashboard.xian");
-      } else {
-        return res.redirect("/dashboard");
+      // ============================================
+      // DUAL VERIFICATION LOGIC
+      // ============================================
+
+      console.log("📋 User data from Firestore:", {
+        email: userData.email,
+        initialEmailVerificationComplete: userData.initialEmailVerificationComplete,
+        emailVerified: userData.emailVerified
+      });
+
+      // NEW USER: First-time registration - needs email link verification
+      if (!userData.initialEmailVerificationComplete) {
+        console.log("🆕 New user detected - redirecting to email verification page");
+        console.log("   Reason: initialEmailVerificationComplete =", userData.initialEmailVerificationComplete);
+        return res.redirect("/dashboard");  // Will auto-redirect to verification-required
       }
+
+      // RETURNING USER: Completed initial verification - needs login code
+      console.log("🔁 Returning user detected - sending verification code");
+      console.log("   Reason: initialEmailVerificationComplete =", userData.initialEmailVerificationComplete);
+
+      // Generate 6-digit code
+      const verificationCode = generateVerificationCode();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+      // Store code in Firestore
+      await updateDoc(doc(db, "users", user.uid), {
+        loginVerificationCode: verificationCode,
+        loginVerificationExpiry: expiresAt,
+        loginVerificationAttempts: 0
+      });
+
+      // Send code via email
+      await sendVerificationCodeEmail(userData.email, verificationCode, userData.name);
+
+      // Store pending verification in session
+      req.session.pendingVerification = true;
+      req.session.verificationEmail = userData.email;
+
+      // Redirect to code entry page
+      req.flash("success_msg", "Verification code sent to your email!");
+      return res.redirect("/verify-login-code");
+
     } else {
       console.log("User Firestore doc not found");
       res.send("User data not found.");
@@ -121,6 +243,7 @@ export const registerUser = async (req, res) => {
       email,
       role: role || "user",
       emailVerified: false,
+      initialEmailVerificationComplete: false,  // Track if they completed first-time verification
       createdAt: new Date(),
       lastVerificationSent: new Date()
     });
@@ -288,10 +411,15 @@ export const checkVerificationStatus = async (req, res) => {
 
     // Update Firestore
     if (isVerified) {
+      console.log("✅ Email verified! Updating Firestore with initialEmailVerificationComplete = true");
       await updateDoc(doc(db, "users", req.session.userId), {
         emailVerified: true,
-        emailVerifiedAt: new Date()
+        emailVerifiedAt: new Date(),
+        initialEmailVerificationComplete: true  // Mark that initial verification is done
       });
+      console.log("✅ Firestore updated successfully");
+    } else {
+      console.log("⚠️ Email not yet verified by Firebase");
     }
 
     res.json({
@@ -302,5 +430,144 @@ export const checkVerificationStatus = async (req, res) => {
   } catch (error) {
     console.error("Check verification error:", error);
     res.status(500).json({ success: false, verified: false });
+  }
+};
+
+// ============================================
+// LOGIN CODE VERIFICATION CONTROLLERS
+// ============================================
+
+export const verifyLoginCodePage = (req, res) => {
+  // Must have pending verification in session
+  if (!req.session.pendingVerification || !req.session.userId) {
+    return res.redirect("/login");
+  }
+
+  res.render("verify-login-code", {
+    title: "Verify Login",
+    userEmail: req.session.verificationEmail,
+    success_msg: req.flash("success_msg"),
+    error_msg: req.flash("error_msg")
+  });
+};
+
+export const submitLoginCode = async (req, res) => {
+  const { code } = req.body;
+
+  // Must have pending verification in session
+  if (!req.session.pendingVerification || !req.session.userId) {
+    return res.redirect("/login");
+  }
+
+  try {
+    const userDoc = await getDoc(doc(db, "users", req.session.userId));
+
+    if (!userDoc.exists()) {
+      req.flash("error_msg", "User not found.");
+      return res.redirect("/login");
+    }
+
+    const userData = userDoc.data();
+
+    // Check if code exists
+    if (!userData.loginVerificationCode) {
+      req.flash("error_msg", "No verification code found. Please try logging in again.");
+      return res.redirect("/login");
+    }
+
+    // Check if code expired
+    const expiryTime = userData.loginVerificationExpiry?.toDate();
+    if (!expiryTime || new Date() > expiryTime) {
+      req.flash("error_msg", "Verification code expired. Please request a new one.");
+      return res.redirect("/verify-login-code");
+    }
+
+    // Check attempts (max 5 attempts)
+    const attempts = userData.loginVerificationAttempts || 0;
+    if (attempts >= 5) {
+      req.flash("error_msg", "Too many failed attempts. Please request a new code.");
+      return res.redirect("/verify-login-code");
+    }
+
+    // Verify code
+    if (code !== userData.loginVerificationCode) {
+      // Increment attempts
+      await updateDoc(doc(db, "users", req.session.userId), {
+        loginVerificationAttempts: attempts + 1
+      });
+
+      const remainingAttempts = 5 - (attempts + 1);
+      req.flash("error_msg", `Invalid code. ${remainingAttempts} attempts remaining.`);
+      return res.redirect("/verify-login-code");
+    }
+
+    // ✅ CODE IS VALID - Complete login
+    console.log("✅ Login code verified successfully");
+
+    // Clear verification data
+    await updateDoc(doc(db, "users", req.session.userId), {
+      loginVerificationCode: null,
+      loginVerificationExpiry: null,
+      loginVerificationAttempts: 0,
+      lastSuccessfulLogin: new Date()
+    });
+
+    // Clear pending verification flag
+    req.session.pendingVerification = false;
+    delete req.session.verificationEmail;
+
+    // Redirect to appropriate dashboard
+    if (req.session.userRole === "admin") {
+      return res.redirect("/adminDashboard.xian");
+    } else {
+      return res.redirect("/dashboard");
+    }
+
+  } catch (error) {
+    console.error("Submit login code error:", error);
+    req.flash("error_msg", "An error occurred. Please try again.");
+    res.redirect("/verify-login-code");
+  }
+};
+
+export const resendLoginCode = async (req, res) => {
+  // Must have pending verification in session
+  if (!req.session.pendingVerification || !req.session.userId) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
+
+  try {
+    const userDoc = await getDoc(doc(db, "users", req.session.userId));
+
+    if (!userDoc.exists()) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const userData = userDoc.data();
+
+    // Generate new code
+    const verificationCode = generateVerificationCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Update code in Firestore
+    await updateDoc(doc(db, "users", req.session.userId), {
+      loginVerificationCode: verificationCode,
+      loginVerificationExpiry: expiresAt,
+      loginVerificationAttempts: 0
+    });
+
+    // Send code via email
+    await sendVerificationCodeEmail(userData.email, verificationCode, userData.name);
+
+    console.log("🔁 Login verification code resent");
+
+    res.json({
+      success: true,
+      message: "New verification code sent to your email!"
+    });
+
+  } catch (error) {
+    console.error("Resend login code error:", error);
+    res.status(500).json({ success: false, message: "Failed to resend code. Please try again." });
   }
 };

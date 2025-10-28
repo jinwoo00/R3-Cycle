@@ -37,10 +37,16 @@ import {
   registerPage,
   forgotPasswordPage,
   dashboardPage,
+  verificationRequiredPage,
+  verifyLoginCodePage,
   loginUser,
   registerUser,
   logoutUser,
-  handleForgotPassword
+  handleForgotPassword,
+  resendVerificationEmail,
+  checkVerificationStatus,
+  submitLoginCode,
+  resendLoginCode
 } from "../controllers/authController.js";
 
 // Authentication routes
@@ -52,6 +58,16 @@ router.get("/forgot-password", forgotPasswordPage);
 router.post("/forgot-password", handleForgotPassword);
 router.get("/dashboard", dashboardPage);
 router.get("/logout", logoutUser);
+
+// Email verification routes (for new users)
+router.get("/verification-required", verificationRequiredPage);
+router.post("/resend-verification", resendVerificationEmail);
+router.get("/check-verification", checkVerificationStatus);
+
+// Login code verification routes (for returning users)
+router.get("/verify-login-code", verifyLoginCodePage);
+router.post("/verify-login-code", submitLoginCode);
+router.post("/resend-login-code", resendLoginCode);
 
 // ✅ Add admin dashboard route here
 router.get("/adminDashboard.xian", (req, res) => {

@@ -11,12 +11,14 @@
     "create:controller": "node create.js controller"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "inquirer": "^9.2.15",
     "bcrypt": "^5.1.0",
-    "express-session": "^1.17.3",
     "connect-flash": "^0.1.1",
+    "dotenv": "^17.2.3",
+    "express": "^4.19.2",
+    "express-session": "^1.17.3",
+    "firebase": "^10.12.0",
     "hbs": "^4.2.0",
-    "firebase": "^10.12.0"
+    "inquirer": "^9.2.15",
+    "nodemailer": "^7.0.10"
   }
 }

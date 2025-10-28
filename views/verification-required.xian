@@ -1,0 +1,274 @@
+{{> head }}
+
+<body class="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+
+  <!-- Header with Logo -->
+  <header class="py-4 px-6">
+    <div class="container mx-auto">
+      <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+        </svg>
+        <span class="text-xl font-bold text-gray-800">R3-Cycle</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content - Centered Modal -->
+  <main class="flex-grow flex items-center justify-center px-4 py-8">
+    <div class="relative w-full max-w-2xl">
+
+      <!-- Modal Card -->
+      <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+
+        <!-- Modal Header with Icon -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6 text-center">
+          <div class="flex justify-center mb-4">
+            <div class="bg-white rounded-full p-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+          </div>
+          <h1 class="text-3xl font-bold text-white">Email Verification Required</h1>
+          <p class="text-blue-100 mt-2">Please verify your email to access your dashboard</p>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="px-8 py-8">
+
+          <!-- Welcome Message -->
+          <div class="text-center mb-6">
+            <p class="text-lg text-gray-700">
+              Welcome, <span class="font-semibold text-gray-900">{{userName}}</span>!
+            </p>
+            <p class="text-sm text-gray-500 mt-2">
+              We've sent a verification email to:
+            </p>
+            <p class="text-base font-semibold text-blue-600 mt-1">{{userEmail}}</p>
+          </div>
+
+          <!-- Instructions -->
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
+            <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              What to do next:
+            </h3>
+            <ol class="space-y-2 text-sm text-gray-700">
+              <li class="flex items-start gap-2">
+                <span class="font-bold text-blue-600 flex-shrink-0">1.</span>
+                <span>Check your inbox (and spam folder) for an email from R3-Cycle</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="font-bold text-blue-600 flex-shrink-0">2.</span>
+                <span>Click the verification link in the email</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="font-bold text-blue-600 flex-shrink-0">3.</span>
+                <span>Return to this page and click "I've Verified My Email"</span>
+              </li>
+            </ol>
+          </div>
+
+          <!-- Flash Messages -->
+          {{#if success_msg}}
+          <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg text-center flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{ success_msg }}</span>
+          </div>
+          {{/if}}
+
+          {{#if error_msg}}
+          <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-center flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{ error_msg }}</span>
+          </div>
+          {{/if}}
+
+          <!-- Dynamic Message Display -->
+          <div id="message-display" class="mb-4 hidden"></div>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-col sm:flex-row gap-3">
+
+            <!-- Check Verification Button (Primary) -->
+            <button
+              id="check-verification-btn"
+              class="flex-1 py-3 px-6 text-base font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <svg id="check-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span id="check-text">I've Verified My Email</span>
+              <svg id="check-spinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </button>
+
+            <!-- Resend Email Button (Secondary) -->
+            <button
+              id="resend-email-btn"
+              class="flex-1 py-3 px-6 text-base font-semibold text-blue-600 bg-blue-50 border-2 border-blue-200 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <svg id="resend-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span id="resend-text">Resend Verification Email</span>
+              <svg id="resend-spinner" class="hidden animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </button>
+
+          </div>
+
+          <!-- Help Text -->
+          <div class="mt-6 text-center">
+            <p class="text-sm text-gray-500">
+              Didn't receive the email? Check your spam folder or click "Resend Verification Email"
+            </p>
+          </div>
+
+          <!-- Logout Link -->
+          <div class="mt-6 text-center border-t border-gray-200 pt-6">
+            <p class="text-sm text-gray-600">
+              Not you?
+              <a href="/logout" class="font-medium text-blue-600 hover:underline ml-1">Logout</a>
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  {{> myFooter }}
+
+  <!-- JavaScript for Button Actions -->
+  <script>
+    const checkBtn = document.getElementById('check-verification-btn');
+    const resendBtn = document.getElementById('resend-email-btn');
+    const checkText = document.getElementById('check-text');
+    const checkIcon = document.getElementById('check-icon');
+    const checkSpinner = document.getElementById('check-spinner');
+    const resendText = document.getElementById('resend-text');
+    const resendIcon = document.getElementById('resend-icon');
+    const resendSpinner = document.getElementById('resend-spinner');
+    const messageDisplay = document.getElementById('message-display');
+
+    // Show message function
+    function showMessage(message, type = 'success') {
+      const bgColor = type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700';
+      const icon = type === 'success'
+        ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
+        : '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+
+      messageDisplay.innerHTML = `
+        <div class="p-4 ${bgColor} border rounded-lg flex items-center justify-center gap-2">
+          ${icon}
+          <span>${message}</span>
+        </div>
+      `;
+      messageDisplay.classList.remove('hidden');
+
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        messageDisplay.classList.add('hidden');
+      }, 5000);
+    }
+
+    // Check verification status
+    checkBtn.addEventListener('click', async () => {
+      // Show loading state
+      checkBtn.disabled = true;
+      checkText.textContent = 'Checking...';
+      checkIcon.classList.add('hidden');
+      checkSpinner.classList.remove('hidden');
+
+      try {
+        const response = await fetch('/check-verification');
+        const data = await response.json();
+
+        if (data.success && data.verified) {
+          showMessage('Email verified successfully! Redirecting to dashboard...', 'success');
+
+          // Redirect to dashboard after 1.5 seconds
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 1500);
+        } else if (data.success && !data.verified) {
+          showMessage('Email not verified yet. Please check your inbox and click the verification link.', 'error');
+
+          // Reset button
+          checkBtn.disabled = false;
+          checkText.textContent = "I've Verified My Email";
+          checkIcon.classList.remove('hidden');
+          checkSpinner.classList.add('hidden');
+        } else {
+          showMessage('Failed to check verification status. Please try again.', 'error');
+
+          // Reset button
+          checkBtn.disabled = false;
+          checkText.textContent = "I've Verified My Email";
+          checkIcon.classList.remove('hidden');
+          checkSpinner.classList.add('hidden');
+        }
+      } catch (error) {
+        showMessage('Network error. Please check your connection and try again.', 'error');
+
+        // Reset button
+        checkBtn.disabled = false;
+        checkText.textContent = "I've Verified My Email";
+        checkIcon.classList.remove('hidden');
+        checkSpinner.classList.add('hidden');
+      }
+    });
+
+    // Resend verification email
+    resendBtn.addEventListener('click', async () => {
+      // Show loading state
+      resendBtn.disabled = true;
+      resendText.textContent = 'Sending...';
+      resendIcon.classList.add('hidden');
+      resendSpinner.classList.remove('hidden');
+
+      try {
+        const response = await fetch('/resend-verification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showMessage(data.message, 'success');
+        } else {
+          showMessage(data.message, 'error');
+        }
+      } catch (error) {
+        showMessage('Failed to send verification email. Please try again.', 'error');
+      } finally {
+        // Re-enable button after 2 seconds (rate limiting)
+        setTimeout(() => {
+          resendBtn.disabled = false;
+          resendText.textContent = 'Resend Verification Email';
+          resendIcon.classList.remove('hidden');
+          resendSpinner.classList.add('hidden');
+        }, 2000);
+      }
+    });
+  </script>
+
+</body>
+</html>
