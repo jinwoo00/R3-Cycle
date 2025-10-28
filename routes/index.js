@@ -39,7 +39,8 @@ import {
   dashboardPage,
   loginUser,
   registerUser,
-  logoutUser
+  logoutUser,
+  handleForgotPassword
 } from "../controllers/authController.js";
 
 // Authentication routes
@@ -48,6 +49,7 @@ router.post("/login", loginUser);
 router.get("/register", registerPage);
 router.post("/register", registerUser);
 router.get("/forgot-password", forgotPasswordPage);
+router.post("/forgot-password", handleForgotPassword);
 router.get("/dashboard", dashboardPage);
 router.get("/logout", logoutUser);
 

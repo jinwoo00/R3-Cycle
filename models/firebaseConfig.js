@@ -27,7 +27,7 @@ SOFTWARE.
 // 💡 Replace config with your own from Firebase Console: https://console.firebase.google.com/
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getAuth, sendPasswordResetEmail, sendEmailVerification } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyALWi6tPdTfQuFXPqnDiPP1pWMfygF-oy0",
@@ -42,4 +42,4 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-export { db, auth };
+export { db, auth, sendPasswordResetEmail, sendEmailVerification };
