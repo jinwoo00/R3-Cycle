@@ -1,4 +1,9 @@
-{{> head}}
+{{> head }}
+
+<!--
+  Register page - Mirroring login page design for consistency
+  Features: Clean layout, SVG icons, proper error handling, responsive design
+-->
 <body class="flex flex-col min-h-screen bg-gray-50">
 
   <!-- Header with clickable logo -->
@@ -13,14 +18,116 @@
     </div>
   </header>
 
-  <div class="flex justify-center mt-10">
-    <form class="flex flex-col w-96 p-6 border rounded-lg shadow" method="POST" action="/register">
-      <h2 class="text-xl font-bold mb-4 text-center">Register</h2>
-      <input type="text" name="name" placeholder="Name" class="mb-2 p-2 border rounded" required />
-      <input type="email" name="email" placeholder="Email" class="mb-2 p-2 border rounded" required />
-      <input type="password" name="password" placeholder="Password" class="mb-2 p-2 border rounded" required />
-      <button type="submit" class="bg-green-500 text-white p-2 rounded">Register</button>
-      <a href="/login" class="text-blue-700 mt-2 text-center">Already have an account? Login</a>
-    </form>
-  </div>
-{{> footer }}
+  <main class="flex-grow flex items-center justify-center px-4">
+
+    <!-- Registration Card -->
+    <div class="relative w-full max-w-md bg-white rounded-xl shadow-xl p-8 md:p-10">
+
+      <div class="flex flex-col items-center text-center">
+        <!-- Hero Icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-green-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+        </svg>
+
+        <!-- Main Headline -->
+        <h1 class="text-3xl font-bold text-gray-800">
+          Create Your Account
+        </h1>
+        <p class="mt-2 text-gray-500">
+          Join R3-Cycle to start earning points by recycling paper.
+        </p>
+      </div>
+
+      <!--
+        Display registration errors from controller
+        Uses 'error_msg' from connect-flash
+      -->
+      {{#if error_msg}}
+        <div class="mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-start gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="text-sm">{{ error_msg }}</span>
+        </div>
+      {{/if}}
+
+      {{#if success_msg}}
+        <div class="mt-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg flex items-start gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="text-sm">{{ success_msg }}</span>
+        </div>
+      {{/if}}
+
+      <!-- Registration Form -->
+      <form class="mt-6" method="POST" action="/register">
+
+        <!-- Name Input -->
+        <div>
+          <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+          <input
+            type="text"
+            name="name"
+            id="name"
+            placeholder="John Doe"
+            class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 transition-shadow"
+            required
+          />
+        </div>
+
+        <!-- Email Input -->
+        <div class="mt-4">
+          <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+          <input
+            type="email"
+            name="email"
+            id="email"
+            placeholder="you@example.com"
+            class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 transition-shadow"
+            required
+          />
+        </div>
+
+        <!-- Password Input -->
+        <div class="mt-4">
+          <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+          <input
+            type="password"
+            name="password"
+            id="password"
+            placeholder="••••••••"
+            class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 transition-shadow"
+            required
+            minlength="6"
+          />
+          <p class="mt-1 text-xs text-gray-500">Password must be at least 6 characters</p>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="mt-6">
+          <button type="submit" class="w-full inline-flex items-center justify-center gap-2 py-3 px-8 text-lg font-medium text-white bg-green-600 rounded-lg shadow-md hover:bg-green-700 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+            Create Account
+          </button>
+        </div>
+
+        <!-- Link to Login Page -->
+        <div class="mt-6 text-center">
+          <p class="text-gray-600">
+            Already have an account?
+            <a href="/login" class="font-medium text-green-600 hover:underline">
+              Login here
+            </a>
+          </p>
+        </div>
+      </form>
+
+    </div>
+  </main>
+
+  {{> myFooter }}
+</body>
+</html>

@@ -20,14 +20,14 @@
       
       <!-- User Menu -->
       <div class="flex items-center gap-4">
-        <span class="text-gray-600 hidden sm:inline">Welcome, <span class="font-medium text-gray-800">{{user.name}}</span>!</span>
-        
+        <span class="text-gray-600 hidden sm:inline">Welcome, <span class="font-medium text-gray-800">{{userFirstName}}</span>!</span>
+
         <!-- User Icon -->
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
-        
-        <a href="/logout" class="text-sm text-red-600 font-medium hover:underline">Logout</a>
+
+        <button onclick="showLogoutModal()" class="text-sm text-red-600 font-medium hover:underline focus:outline-none">Logout</button>
       </div>
     </div>
   </nav>
@@ -168,6 +168,94 @@
 
   <!-- Sticky Footer -->
   {{> myFooter }}
+
+  <!-- Logout Confirmation Modal -->
+  <div id="logoutModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onclick="hideLogoutModal()"></div>
+
+    <!-- Modal Content -->
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+      <!-- Vertical centering trick -->
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+      <!-- Modal Card -->
+      <div class="inline-block align-bottom bg-white rounded-xl shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div class="bg-white px-6 pt-6 pb-4 sm:p-8">
+          <div class="sm:flex sm:items-start">
+            <!-- Icon -->
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-16 w-16 rounded-full bg-red-100 sm:mx-0 sm:h-12 sm:w-12">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </div>
+
+            <!-- Content -->
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3 class="text-xl font-bold text-gray-900 mb-2" id="modal-title">
+                Confirm Logout
+              </h3>
+              <div class="mt-2">
+                <p class="text-sm text-gray-600">
+                  Are you sure you want to log out? You'll need to enter your credentials again to access your dashboard.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="bg-gray-50 px-6 py-4 sm:px-8 sm:py-4 sm:flex sm:flex-row-reverse gap-3 rounded-b-xl">
+          <button onclick="confirmLogout()" type="button" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+            Logout
+          </button>
+          <button onclick="hideLogoutModal()" type="button" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:w-auto sm:text-sm transition-colors">
+            Stay Logged In
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logout Modal JavaScript -->
+  <script>
+    // Show logout confirmation modal
+    function showLogoutModal() {
+      const modal = document.getElementById('logoutModal');
+      modal.classList.remove('hidden');
+      // Trap focus in modal
+      document.body.style.overflow = 'hidden';
+      // Focus on the "Stay Logged In" button for accessibility
+      setTimeout(() => {
+        modal.querySelector('button[onclick="hideLogoutModal()"]').focus();
+      }, 100);
+    }
+
+    // Hide logout modal
+    function hideLogoutModal() {
+      const modal = document.getElementById('logoutModal');
+      modal.classList.add('hidden');
+      // Restore scroll
+      document.body.style.overflow = '';
+    }
+
+    // Confirm logout - redirect to logout route
+    function confirmLogout() {
+      window.location.href = '/logout';
+    }
+
+    // Keyboard accessibility - ESC to close, Enter to confirm
+    document.addEventListener('keydown', function(event) {
+      const modal = document.getElementById('logoutModal');
+      if (!modal.classList.contains('hidden')) {
+        if (event.key === 'Escape') {
+          hideLogoutModal();
+        } else if (event.key === 'Enter') {
+          confirmLogout();
+        }
+      }
+    });
+  </script>
 
 </body>
 </html>

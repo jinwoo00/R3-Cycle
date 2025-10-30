@@ -106,11 +106,15 @@ export const dashboardPage = async (req, res) => {
         return res.redirect("/verification-required");
       }
 
+      // Extract first name from full name
+      const firstName = userData.name.split(' ')[0];
+
       res.render("user/dashboard", {
         title: "Dashboard",
         emailVerified: emailVerified,
         userEmail: userData.email,
-        userName: userData.name
+        userName: userData.name,
+        userFirstName: firstName
       });
     } else {
       res.redirect("/login");
@@ -221,11 +225,29 @@ export const loginUser = async (req, res) => {
 
     } else {
       console.log("User Firestore doc not found");
-      res.send("User data not found.");
+      req.flash("error_msg", "User account not found. Please check your credentials or register.");
+      return res.redirect("/login");
     }
   } catch (error) {
     console.error("Login error:", error.code, error.message);
-    res.send("Login failed: " + error.message);
+
+    // Handle specific Firebase auth errors
+    let errorMessage = "Login failed. Please try again.";
+
+    if (error.code === "auth/invalid-credential" || error.code === "auth/wrong-password") {
+      errorMessage = "Invalid email or password. Please try again.";
+    } else if (error.code === "auth/user-not-found") {
+      errorMessage = "No account found with this email. Please register first.";
+    } else if (error.code === "auth/invalid-email") {
+      errorMessage = "Invalid email address format.";
+    } else if (error.code === "auth/too-many-requests") {
+      errorMessage = "Too many failed login attempts. Please try again later.";
+    } else if (error.code === "auth/user-disabled") {
+      errorMessage = "This account has been disabled. Please contact support.";
+    }
+
+    req.flash("error_msg", errorMessage);
+    return res.redirect("/login");
   }
 };
 
@@ -277,20 +299,45 @@ export const registerUser = async (req, res) => {
     }
 
   } catch (error) {
-    console.error("Registration error:", error.message);
-    res.send("Registration failed: " + error.message);
+    console.error("Registration error:", error.code, error.message);
+
+    // Handle specific Firebase auth errors
+    let errorMessage = "Registration failed. Please try again.";
+
+    if (error.code === "auth/email-already-in-use") {
+      errorMessage = "This email is already registered. Please login instead.";
+    } else if (error.code === "auth/invalid-email") {
+      errorMessage = "Invalid email address format.";
+    } else if (error.code === "auth/weak-password") {
+      errorMessage = "Password is too weak. Please use at least 6 characters.";
+    } else if (error.code === "auth/operation-not-allowed") {
+      errorMessage = "Email/password registration is not enabled. Please contact support.";
+    }
+
+    req.flash("error_msg", errorMessage);
+    return res.redirect("/register");
   }
 };
 
 
 export const logoutUser = async (req, res) => {
   try {
+    // Set flash message BEFORE destroying session
+    req.flash("success_msg", "You have been logged out successfully.");
+
     await signOut(auth);
-    req.session.destroy();
-    res.redirect("/login");
+
+    // Destroy session after setting flash message
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Session destruction error:", err);
+      }
+      res.redirect("/login");
+    });
   } catch (error) {
     console.error("Logout error:", error.message);
-    res.send("Logout failed");
+    req.flash("error_msg", "Logout failed. Please try again.");
+    return res.redirect("/dashboard");
   }
 };
 
