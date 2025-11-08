@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* Tell Tailwind where to look for your classes */
+@source "./**/*.{html,js,ts}";
+@source "./views/**/*.{html,ejs,hbs}";
+@source "./partials/**/*.{html,ejs,hbs}";
