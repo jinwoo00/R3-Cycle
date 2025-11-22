@@ -217,9 +217,9 @@
   {{> myFooter }}
 
   <!-- Logout Confirmation Modal -->
-  <div id="logoutModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div id="logoutModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
     <!-- Backdrop -->
-    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onclick="hideLogoutModal()"></div>
+    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onclick="hideLogoutModal()" style="display: none;"></div>
 
     <!-- Modal Content -->
     <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
@@ -304,6 +304,24 @@
 
     // Confirm logout - redirect to logout route
     function confirmLogout() {
+      // Immediately redirect - don't wait for DOM manipulation
+      // This ensures logout always happens even if there's an error
+      try {
+        // Hide modal quickly if it exists
+        const modal = document.getElementById('logoutModal');
+        if (modal) {
+          modal.style.display = 'none';
+          modal.classList.add('hidden');
+        }
+        
+        // Restore body overflow
+        document.body.style.overflow = '';
+      } catch (e) {
+        // Ignore errors - we still want to logout
+        console.log('Error hiding modal:', e);
+      }
+      
+      // Always redirect - this is the critical part
       window.location.href = '/logout';
     }
 

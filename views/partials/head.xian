@@ -1,8 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="background-color: #f9fafb;">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="/tailwind.css">
   <title>{{ title }} </title>
+  <style>
+    /* Ensure no black background during page transitions */
+    html, body {
+      background-color: #f9fafb !important;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
 </head>

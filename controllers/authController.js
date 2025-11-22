@@ -348,22 +348,24 @@ export const registerUser = async (req, res) => {
 
 export const logoutUser = async (req, res) => {
   try {
-    // Set flash message BEFORE destroying session
-    req.flash("success_msg", "You have been logged out successfully.");
-
+    // Sign out from Firebase first
     await signOut(auth);
 
-    // Destroy session after setting flash message
+    // Destroy session and redirect immediately
     req.session.destroy((err) => {
       if (err) {
         console.error("Session destruction error:", err);
       }
-      res.redirect("/login");
+      // Clear session cookie
+      res.clearCookie('connect.sid', { path: '/' });
+      // Direct redirect - no intermediate page
+      res.redirect(302, '/login');
     });
   } catch (error) {
     console.error("Logout error:", error.message);
-    req.flash("error_msg", "Logout failed. Please try again.");
-    return res.redirect("/dashboard");
+    // Even on error, clear session and redirect
+    res.clearCookie('connect.sid', { path: '/' });
+    res.redirect(302, '/login');
   }
 };
 
