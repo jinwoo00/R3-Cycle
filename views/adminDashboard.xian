@@ -438,24 +438,6 @@
 
         // Confirm logout - redirect to logout route
         function confirmLogout() {
-            // Immediately redirect - don't wait for DOM manipulation
-            // This ensures logout always happens even if there's an error
-            try {
-                // Hide modal quickly if it exists
-                const modal = document.getElementById('logoutModal');
-                if (modal) {
-                    modal.style.display = 'none';
-                    modal.classList.add('hidden');
-                }
-                
-                // Restore body overflow
-                document.body.style.overflow = '';
-            } catch (e) {
-                // Ignore errors - we still want to logout
-                console.log('Error hiding modal:', e);
-            }
-            
-            // Always redirect - this is the critical part
             window.location.href = '/logout';
         }
 
@@ -473,12 +455,12 @@
     </script>
 
     <!-- Logout Confirmation Modal -->
-    <div id="logoutModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+    <div id="logoutModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <!-- Backdrop -->
-        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onclick="hideLogoutModal()" style="display: none;"></div>
+        <div class="fixed inset-0 transition-opacity" style="background-color: rgba(0, 0, 0, 0.5);" onclick="hideLogoutModal()"></div>
 
         <!-- Modal Content -->
-        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="relative flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <!-- Vertical centering trick -->
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
