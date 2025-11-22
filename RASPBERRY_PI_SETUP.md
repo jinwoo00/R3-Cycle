@@ -141,22 +141,25 @@ Wait 1 minute, then reconnect via PuTTY.
 | Component | GPIO Pin | Notes |
 |-----------|----------|-------|
 | **RC522 RFID** | | |
-| - RST | GPIO 25 | Via logic converter |
-| - SDA/SS | GPIO 8 (CE0) | Via logic converter |
-| - MOSI | GPIO 10 | Via logic converter |
-| - MISO | GPIO 9 | Via logic converter |
-| - SCK | GPIO 11 | Via logic converter |
+| - RST | GPIO 25 | Via logic converter (Pin 22) |
+| - SDA/SS | GPIO 8 (CE0) | Via logic converter (Pin 24) |
+| - MOSI | GPIO 10 | Via logic converter (Pin 19) |
+| - MISO | GPIO 9 | Via logic converter (Pin 21) |
+| - SCK | GPIO 11 | Via logic converter (Pin 23) |
 | **HX711 Load Cell** | | |
-| - DT (Data) | GPIO 5 | Direct 5V connection |
-| - SCK (Clock) | GPIO 6 | Direct 5V connection |
-| **IR Sensor** | GPIO 17 | Direct 5V connection |
-| **Inductive Sensor** | GPIO 27 | Direct 5V connection |
-| **Servo #1 (Collection)** | GPIO 18 | PWM-capable, external 5V power |
-| **Servo #2 (Reward)** | GPIO 23 | PWM-capable, external 5V power |
-| **LED Red** | GPIO 24 | Via 220Ω resistor |
+| - DT (Data) | GPIO 5 | Direct 5V connection (Pin 29) |
+| - SCK (Clock) | GPIO 6 | Direct 5V connection (Pin 31) |
+| **IR Sensor** | GPIO 27 | Direct 5V connection (Pin 13) |
+| **Inductive Sensor** | GPIO 17 | Via Logic Level Converter (Pin 11, LLC HV1→LV1) |
+| **Servo #1 (Collection)** | GPIO 18 | PWM-capable, external 5V power (Pin 12) |
+| **Servo #2 (Reward)** | GPIO 23 | PWM-capable, external 5V power (Pin 16) |
+| **LED Red** | GPIO 22 | Via 220Ω resistor (Pin 15) |
 | **LCD I2C** | | |
-| - SDA | GPIO 2 | Direct I2C connection |
-| - SCL | GPIO 3 | Direct I2C connection |
+| - SDA | GPIO 2 | Direct I2C connection (Pin 3) |
+| - SCL | GPIO 3 | Direct I2C connection (Pin 5) |
+| **TTL USB-Serial** (Optional) | | |
+| - TXD | GPIO 14 | Serial TX (Pin 8) |
+| - RXD | GPIO 15 | Serial RX (Pin 10) |
 
 ### Wiring Diagram
 
@@ -177,20 +180,20 @@ Wait 1 minute, then reconnect via PuTTY.
 │                                                            │
 │  GND ───┴─→ All components (shared ground)                │
 │                                                            │
-│  GPIO 2 (SDA) ────→ LCD I2C SDA                           │
-│  GPIO 3 (SCL) ────→ LCD I2C SCL                           │
-│  GPIO 5  ─────────→ HX711 DT                              │
-│  GPIO 6  ─────────→ HX711 SCK                             │
-│  GPIO 8  ─────────→ RC522 SDA (via Logic Converter)       │
-│  GPIO 9  ─────────→ RC522 MISO (via Logic Converter)      │
-│  GPIO 10 ─────────→ RC522 MOSI (via Logic Converter)      │
-│  GPIO 11 ─────────→ RC522 SCK (via Logic Converter)       │
-│  GPIO 17 ─────────→ IR Sensor OUT                         │
-│  GPIO 18 ─────────→ Servo #1 Signal (PWM)                 │
-│  GPIO 23 ─────────→ Servo #2 Signal (PWM)                 │
-│  GPIO 24 ─────────→ LED Red (via 220Ω resistor)           │
-│  GPIO 25 ─────────→ RC522 RST (via Logic Converter)       │
-│  GPIO 27 ─────────→ Inductive Sensor OUT                  │
+│  GPIO 2 (SDA) ────→ LCD I2C SDA (Pin 3)                   │
+│  GPIO 3 (SCL) ────→ LCD I2C SCL (Pin 5)                   │
+│  GPIO 5  ─────────→ HX711 DT (Pin 29)                     │
+│  GPIO 6  ─────────→ HX711 SCK (Pin 31)                    │
+│  GPIO 8  ─────────→ RC522 SDA/CE0 (Pin 24, via LLC)       │
+│  GPIO 9  ─────────→ RC522 MISO (Pin 21, via LLC)          │
+│  GPIO 10 ─────────→ RC522 MOSI (Pin 19, via LLC)          │
+│  GPIO 11 ─────────→ RC522 SCK (Pin 23, via LLC)           │
+│  GPIO 17 ─────────→ Inductive Sensor OUT (Pin 11, via LLC)│
+│  GPIO 18 ─────────→ Servo #1 Signal/PWM (Pin 12)          │
+│  GPIO 22 ─────────→ LED Red (Pin 15, via 220Ω resistor)  │
+│  GPIO 23 ─────────→ Servo #2 Signal/PWM (Pin 16)          │
+│  GPIO 25 ─────────→ RC522 RST (Pin 22, via LLC)           │
+│  GPIO 27 ─────────→ IR Sensor OUT (Pin 13)                │
 │                                                            │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -204,10 +207,14 @@ Wait 1 minute, then reconnect via PuTTY.
    - **MUST share ground** between Pi and external power
 
 2. **Logic Level Converter**
-   - RC522 operates at 3.3V but Pi SPI is 3.3V safe
-   - Use bidirectional level converter for SPI pins (MOSI, MISO, SCK, SS, RST)
-   - Connect Pi side to LV (Low Voltage)
-   - Connect RC522 side to HV (High Voltage)
+   - **RC522 RFID Reader**: Operates at 3.3V, use bidirectional level converter for SPI pins (MOSI, MISO, SCK, SS, RST)
+     - Connect Pi side to LV (Low Voltage - 3.3V)
+     - Connect RC522 side to HV (High Voltage - 5V)
+   - **LJ12A3 Inductive Sensor**: Outputs 5V, must step down to 3.3V for Pi GPIO
+     - Connect sensor output (Black wire) to LLC HV1
+     - Connect Pi GPIO 17 to LLC LV1
+     - Sensor Brown wire (VCC) to 5V
+     - Sensor Blue wire (GND) to GND
 
 3. **Shared Ground**
    - All components MUST share common ground

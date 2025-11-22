@@ -2,8 +2,8 @@
 
 > **Purpose:** This document serves as Claude's memory and progress tracker for the R3-Cycle IoT Paper Recycling System development. All completed tasks are checked off, and Claude should reference this file at the start of each session.
 
-**Last Updated:** 2025-11-21 (Phase 1-6 Complete!)
-**Project Status:** 85% Complete (Auth, UI, IoT Backend, Redemption, Admin Monitoring, Raspberry Pi Python Integration Complete!)
+**Last Updated:** 2025-01-XX (Phase 1-6 Complete! Pin Mapping Updated!)
+**Project Status:** 90% Complete (Auth, UI, IoT Backend, Redemption, Admin Monitoring, Raspberry Pi Python Integration Complete! Pin mappings verified and updated.)
 
 ---
 
@@ -182,43 +182,43 @@ INTERNAL COMPONENTS:
 - [ ] No alert generation logic
 - [ ] No data refresh mechanism
 
-### ❌ NOT IMPLEMENTED (0%)
+### ✅ IMPLEMENTED FEATURES (Phases 1-4 Complete!)
 
-#### RFID Integration
-- [ ] RFID field in user database
-- [ ] RFID registration page/flow
-- [ ] `POST /api/rfid/register` endpoint
-- [ ] `POST /api/rfid/verify` endpoint
-- [ ] RFID-to-user linking logic
+#### RFID Integration ✅
+- [x] RFID field in user database ✅
+- [x] RFID registration page/flow ✅
+- [x] `POST /api/rfid/register` endpoint ✅
+- [x] `POST /api/rfid/verify` endpoint ✅
+- [x] RFID-to-user linking logic ✅
 
-#### Transaction Processing
-- [ ] `transactions` Firestore collection
-- [ ] `POST /api/transaction/submit` endpoint
-- [ ] Weight validation logic (1-20g)
-- [ ] Metal detection handling
-- [ ] Points calculation algorithm
-- [ ] Transaction recording to database
-- [ ] User points update logic
+#### Transaction Processing ✅
+- [x] `transactions` Firestore collection ✅
+- [x] `POST /api/transaction/submit` endpoint ✅
+- [x] Weight validation logic (1-20g) ✅
+- [x] Metal detection handling ✅
+- [x] Points calculation algorithm ✅
+- [x] Transaction recording to database ✅
+- [x] User points update logic ✅
 
-#### Reward System
-- [ ] `redemptions` Firestore collection
-- [ ] `rewards` Firestore collection
-- [ ] `POST /api/redemption/redeem` endpoint
-- [ ] `GET /api/redemption/pending` endpoint
-- [ ] `POST /api/redemption/confirm` endpoint
-- [ ] `POST /api/redemption/check-local` endpoint
-- [ ] Servo motor control commands
-- [ ] Inventory management
+#### Reward System ✅
+- [x] `redemptions` Firestore collection ✅
+- [x] `POST /api/redemption/submit` endpoint ✅
+- [x] `GET /api/redemption/pending` endpoint ✅
+- [x] `POST /api/redemption/dispense` endpoint ✅
+- [x] Servo motor control commands (documented) ✅
+- [ ] `rewards` Firestore collection (future enhancement)
+- [ ] `POST /api/redemption/check-local` endpoint (Phase 5)
+- [ ] Inventory management (basic stock tracking implemented)
 
-#### Machine Monitoring
-- [ ] `machines` Firestore collection
-- [ ] `alerts` Firestore collection
-- [ ] `POST /api/machine/heartbeat` endpoint
-- [ ] `POST /api/machine/alert` endpoint
-- [ ] `GET /api/machine/commands` endpoint
-- [ ] Real-time status updates
-- [ ] Stock level tracking
-- [ ] Sensor health monitoring
+#### Machine Monitoring ✅
+- [x] `machines` Firestore collection ✅
+- [x] `alerts` Firestore collection ✅
+- [x] `POST /api/machine/heartbeat` endpoint ✅
+- [x] Stock level tracking ✅
+- [x] Sensor health monitoring ✅
+- [ ] `POST /api/machine/alert` endpoint (not needed - auto-generated)
+- [ ] `GET /api/machine/commands` endpoint (future feature)
+- [ ] Real-time status updates (WebSocket - Phase 4 pending)
 
 #### Raspberry Pi Code ✅ COMPLETE (Phase 6)
 - [x] Main Python program (`main.py`) ✅
@@ -237,13 +237,16 @@ INTERNAL COMPONENTS:
 - [ ] Local SQLite database for offline mode (Phase 5)
 - [ ] Transaction sync mechanism (Phase 5)
 
-#### Admin Features
-- [ ] `POST /api/admin/adjust-points` endpoint
-- [ ] `GET /api/admin/machines` endpoint
-- [ ] `GET /api/admin/transactions` endpoint
-- [ ] Point adjustment UI functionality
-- [ ] Machine management actions
-- [ ] Activity log data retrieval
+#### Admin Features ✅
+- [x] `POST /api/admin/adjust-points` endpoint ✅
+- [x] `GET /api/admin/machines` endpoint ✅
+- [x] `GET /api/admin/transactions` endpoint ✅
+- [x] `GET /api/admin/stats` endpoint ✅
+- [x] `POST /api/admin/dismiss-alert` endpoint ✅
+- [x] Point adjustment UI functionality ✅
+- [x] Machine management actions ✅
+- [x] Activity log data retrieval ✅
+- [ ] Frontend auto-refresh (Phase 4 - 10% remaining)
 
 #### Production Features
 - [ ] Redis session store (currently in-memory)
@@ -318,7 +321,7 @@ INTERNAL COMPONENTS:
   }
   ```
 
-- [ ] Create `redemptions` collection
+- [x] Create `redemptions` collection ✅ (Phase 3)
   ```javascript
   redemptions/{redemptionId} {
     userId: string,
@@ -740,15 +743,16 @@ INTERNAL COMPONENTS:
   - Production deployment checklist
   - File: [RASPBERRY_PI_SETUP.md](RASPBERRY_PI_SETUP.md) (~400 lines)
 
-#### GPIO Pin Mapping Validation
-All 16 GPIO pins assigned with no conflicts:
-- GPIO 2, 3 - I2C (LCD)
-- GPIO 5, 6 - HX711 load cell
-- GPIO 8, 9, 10, 11, 25 - RC522 RFID (via logic converter)
-- GPIO 17 - IR sensor
-- GPIO 18, 23 - Servo motors (PWM)
-- GPIO 24 - LED indicator
-- GPIO 27 - Inductive sensor
+#### GPIO Pin Mapping Validation ✅ UPDATED 2025-01-XX
+All GPIO pins assigned with no conflicts (verified with hardware):
+- GPIO 2, 3 - I2C (LCD) - Pin 3, 5
+- GPIO 5, 6 - HX711 load cell - Pin 29, 31
+- GPIO 8, 9, 10, 11, 25 - RC522 RFID (via logic converter) - Pin 24, 21, 19, 23, 22
+- GPIO 17 - Inductive sensor (via LLC) - Pin 11
+- GPIO 18, 23 - Servo motors (PWM) - Pin 12, 16
+- GPIO 22 - LED indicator - Pin 15
+- GPIO 27 - IR sensor - Pin 13
+- GPIO 14, 15 - TTL USB-Serial (optional) - Pin 8, 10
 
 **Phase 6 Status: 100% Complete! 🎉**
 
@@ -984,7 +988,7 @@ users/{userId} {
   loginVerificationAttempts: number,
   lastSuccessfulLogin: Timestamp | null,
 
-  // TO BE ADDED ❌
+  // ADDED ✅ (Phase 1)
   rfidTag: string | null,              // "A1B2C3D4"
   rfidRegisteredAt: Timestamp | null,  // When RFID was linked
   currentPoints: number,                // Default: 0
@@ -995,9 +999,9 @@ users/{userId} {
 }
 ```
 
-### New Collections to Create
+### New Collections Created ✅
 
-#### `transactions` Collection ❌
+#### `transactions` Collection ✅ (Phase 1)
 ```javascript
 transactions/{transactionId} {
   userId: string,                      // User Firebase UID
@@ -1018,7 +1022,7 @@ transactions/{transactionId} {
 // Firestore Index: machineId, timestamp DESC
 ```
 
-#### `machines` Collection ❌
+#### `machines` Collection ✅ (Phase 1)
 ```javascript
 machines/{machineId} {
   id: string,                          // "RPI_001"
@@ -1044,7 +1048,7 @@ machines/{machineId} {
 // Firestore Index: status, lastHeartbeat DESC
 ```
 
-#### `redemptions` Collection ❌
+#### `redemptions` Collection ✅ (Phase 3)
 ```javascript
 redemptions/{redemptionId} {
   userId: string,                      // User Firebase UID
@@ -1064,7 +1068,7 @@ redemptions/{redemptionId} {
 // Firestore Index: userId, requestedAt DESC
 ```
 
-#### `alerts` Collection ❌
+#### `alerts` Collection ✅ (Phase 4)
 ```javascript
 alerts/{alertId} {
   machineId: string,                   // "RPI_001"

@@ -38,24 +38,30 @@ PIN_LOAD_CELL_DT = 5    # Data pin
 PIN_LOAD_CELL_SCK = 6   # Clock pin
 
 # IR Obstacle Sensor
-PIN_IR_SENSOR = 17      # Digital output (HIGH when paper detected)
+PIN_IR_SENSOR = 27      # Digital output (HIGH when paper detected) - Pin 13
 
-# Inductive Proximity Sensor (Metal Detection)
-PIN_INDUCTIVE_SENSOR = 27  # Digital output (HIGH when metal detected)
+# Inductive Proximity Sensor (Metal Detection) - LJ12A3 via Logic Level Converter
+PIN_INDUCTIVE_SENSOR = 17  # Digital output (HIGH when metal detected) - Pin 11 (via LLC HV1→LV1)
 
 # Servo Motors (PWM-capable pins)
 PIN_SERVO_COLLECTION = 18   # Servo #1 - Paper collection mechanism
 PIN_SERVO_REWARD = 23       # Servo #2 - Reward dispenser
 
 # LED Indicators
-PIN_LED_RED = 24        # Error/rejection indicator
+PIN_LED_RED = 22        # Error/rejection indicator - Pin 15 (using GPIO22, not GPIO27 to avoid conflict with IR sensor)
+# Note: GPIO27 is also an option, but GPIO22 is recommended to avoid conflict with IR sensor on GPIO27
 
 # LCD Display (I2C)
-# SDA = GPIO 2 (handled by I2C library)
-# SCL = GPIO 3 (handled by I2C library)
+# SDA = GPIO 2 (handled by I2C library) - Pin 3
+# SCL = GPIO 3 (handled by I2C library) - Pin 5
 LCD_I2C_ADDRESS = 0x27  # Common I2C address for LCD modules
 LCD_COLS = 16           # 16 columns
 LCD_ROWS = 2            # 2 rows
+
+# TTL USB-to-Serial Converter (Optional - for debugging)
+# TXD = GPIO 14 (Pin 8) - TTL TX → Pi RX
+# RXD = GPIO 15 (Pin 10) - TTL RX → Pi TX
+# Note: This is optional and used for serial communication/debugging
 
 # ============================================
 # WEIGHT SENSOR CALIBRATION
