@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link RFID Card - R3-Cycle</title>
+    <link href="/tailwind.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-green-600 text-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        <h1 class="text-2xl font-bold">Link RFID Card</h1>
+                    </div>
+                    <a href="/dashboard" class="bg-green-700 hover:bg-green-800 px-4 py-2 rounded-lg transition">
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow max-w-3xl mx-auto w-full px-4 py-8">
+            <!-- Instructions Card -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+                <div class="flex items-start space-x-3">
+                    <svg class="h-6 w-6 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <h3 class="font-semibold text-blue-900 mb-2">How to Link Your RFID Card</h3>
+                        <ol class="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                            <li>Enter your RFID card number in the field below</li>
+                            <li>You can find this number on the back of your card (format: A1B2C3D4)</li>
+                            <li>Click "Link Card" to register it to your account</li>
+                            <li>Once linked, you can use this card at any R3-Cycle machine</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current RFID Status -->
+            {{#if currentRfid}}
+            <div class="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start space-x-3">
+                        <svg class="h-6 w-6 text-green-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <h3 class="font-semibold text-green-900 mb-1">Card Already Linked</h3>
+                            <p class="text-sm text-green-800">Your current RFID card: <span class="font-mono font-bold">{{currentRfid}}</span></p>
+                            <p class="text-xs text-green-700 mt-1">Registered on {{rfidRegisteredAt}}</p>
+                        </div>
+                    </div>
+                    <button id="unlinkBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition">
+                        Unlink Card
+                    </button>
+                </div>
+            </div>
+            {{/if}}
+
+            <!-- Link RFID Form -->
+            <div class="bg-white shadow-lg rounded-lg p-8">
+                <h2 class="text-xl font-bold text-gray-900 mb-6">
+                    {{#if currentRfid}}Update RFID Card{{else}}Link New RFID Card{{/if}}
+                </h2>
+
+                <!-- Success/Error Messages -->
+                <div id="messageBox" class="hidden mb-6"></div>
+
+                <form id="linkRfidForm">
+                    <div class="mb-6">
+                        <label for="rfidTag" class="block text-sm font-medium text-gray-700 mb-2">
+                            RFID Card Number
+                        </label>
+                        <input
+                            type="text"
+                            id="rfidTag"
+                            name="rfidTag"
+                            placeholder="e.g., A1B2C3D4"
+                            pattern="[A-Za-z0-9]{8,16}"
+                            required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-mono uppercase"
+                        >
+                        <p class="text-xs text-gray-500 mt-2">
+                            Enter the 8-16 character alphanumeric code from your RFID card
+                        </p>
+                    </div>
+
+                    <button
+                        type="submit"
+                        id="submitBtn"
+                        class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center space-x-2"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span>Link Card to Account</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Help Section -->
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mt-6">
+                <h3 class="font-semibold text-gray-900 mb-3">Need Help?</h3>
+                <div class="text-sm text-gray-700 space-y-2">
+                    <p><strong>Q: Where can I get an RFID card?</strong></p>
+                    <p class="pl-4">A: Visit any R3-Cycle machine location or contact your administrator.</p>
+
+                    <p class="mt-3"><strong>Q: Can I link multiple cards?</strong></p>
+                    <p class="pl-4">A: No, each account can only have one active RFID card at a time.</p>
+
+                    <p class="mt-3"><strong>Q: What if my card is already registered?</strong></p>
+                    <p class="pl-4">A: Each RFID card can only be linked to one account. Contact support if you need assistance.</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white py-6 mt-8">
+            <div class="max-w-7xl mx-auto px-4 text-center text-sm">
+                <p>&copy; 2025 R3-Cycle IoT Recycling System. Mindanao State University - College of Information Technology</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Auto-convert to uppercase as user types
+        const rfidInput = document.getElementById('rfidTag');
+        rfidInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+        });
+
+        // Handle form submission
+        document.getElementById('linkRfidForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const messageBox = document.getElementById('messageBox');
+            const rfidTag = document.getElementById('rfidTag').value.trim();
+
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+            try {
+                const response = await fetch('/api/rfid/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ rfidTag })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Success message
+                    messageBox.className = 'bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6';
+                    messageBox.innerHTML = `
+                        <div class="flex items-center space-x-2">
+                            <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="font-semibold">${data.message}</span>
+                        </div>
+                        <p class="text-sm mt-2">Redirecting to dashboard...</p>
+                    `;
+                    messageBox.classList.remove('hidden');
+
+                    // Redirect after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 2000);
+                } else {
+                    // Error message
+                    messageBox.className = 'bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6';
+                    messageBox.innerHTML = `
+                        <div class="flex items-center space-x-2">
+                            <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="font-semibold">${data.message}</span>
+                        </div>
+                    `;
+                    messageBox.classList.remove('hidden');
+
+                    // Re-enable button
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg><span>Link Card to Account</span>';
+                }
+            } catch (error) {
+                messageBox.className = 'bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6';
+                messageBox.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="font-semibold">Network error. Please try again.</span>
+                    </div>
+                `;
+                messageBox.classList.remove('hidden');
+
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg><span>Link Card to Account</span>';
+            }
+        });
+
+        // Handle unlink button
+        const unlinkBtn = document.getElementById('unlinkBtn');
+        if (unlinkBtn) {
+            unlinkBtn.addEventListener('click', async () => {
+                if (!confirm('Are you sure you want to unlink your RFID card? You will need to link a new card to use R3-Cycle machines.')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/rfid/unlink', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                } catch (error) {
+                    alert('Network error. Please try again.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

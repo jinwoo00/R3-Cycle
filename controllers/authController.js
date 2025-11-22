@@ -109,12 +109,38 @@ export const dashboardPage = async (req, res) => {
       // Extract first name from full name
       const firstName = userData.name.split(' ')[0];
 
+      // Prepare user data with defaults
+      const user = {
+        email: userData.email,
+        name: userData.name,
+        firstName: firstName,
+        rfidTag: userData.rfidTag || null,
+        rfidRegisteredAt: userData.rfidRegisteredAt || null,
+        points: userData.currentPoints || 0
+      };
+
+      // Prepare stats with defaults
+      const stats = {
+        totalWeight: userData.totalPaperRecycled || 0,
+        totalRedeemed: userData.bondsEarned || 0
+      };
+
+      // Mock rewards data (will be replaced with real data in Phase 3)
+      const rewards = [
+        { name: "Bond Paper (1 sheet)", cost: 20 },
+        { name: "Bond Paper (5 sheets)", cost: 100 },
+        { name: "Notebook", cost: 200 }
+      ];
+
       res.render("user/dashboard", {
         title: "Dashboard",
         emailVerified: emailVerified,
         userEmail: userData.email,
         userName: userData.name,
-        userFirstName: firstName
+        userFirstName: firstName,
+        user: user,
+        stats: stats,
+        rewards: rewards
       });
     } else {
       res.redirect("/login");

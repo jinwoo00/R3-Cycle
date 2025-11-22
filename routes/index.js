@@ -57,6 +57,15 @@ router.post("/register", registerUser);
 router.get("/forgot-password", forgotPasswordPage);
 router.post("/forgot-password", handleForgotPassword);
 router.get("/dashboard", dashboardPage);
+router.get("/link-rfid", (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect("/login");
+  }
+  res.render("user/link-rfid", {
+    currentRfid: req.session.rfidTag || null,
+    rfidRegisteredAt: req.session.rfidRegisteredAt || null
+  });
+});
 router.get("/logout", logoutUser);
 
 // Email verification routes (for new users)

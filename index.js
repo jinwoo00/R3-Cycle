@@ -28,6 +28,7 @@ import path from "path";
 import session from "express-session";
 import flash from "connect-flash";
 import router from "./routes/index.js";
+import iotRouter from "./routes/iot.js";
 import fs from 'fs';
 import hbs from "hbs";
 import { fileURLToPath } from "url";
@@ -101,7 +102,11 @@ fs.readdir(partialsDir, (err, files) => {
     });
 });
 
+// Web routes (authentication, dashboards, etc.)
 app.use("/", router);
+
+// IoT API routes (Raspberry Pi communication)
+app.use("/api", iotRouter);
 
 export default app;
 

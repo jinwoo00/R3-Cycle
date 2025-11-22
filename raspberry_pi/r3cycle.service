@@ -1,0 +1,16 @@
+[Unit]
+Description=R3-Cycle IoT Paper Recycling System
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/r3cycle
+ExecStart=/usr/bin/python3 /home/pi/r3cycle/main.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/pi/r3cycle/r3cycle.log
+StandardError=append:/home/pi/r3cycle/r3cycle.log
+
+[Install]
+WantedBy=multi-user.target

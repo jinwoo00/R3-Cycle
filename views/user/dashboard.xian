@@ -82,6 +82,54 @@
         </div>
       </div>
 
+      <!-- RFID Card Status -->
+      <div class="mt-8">
+        {{#if user.rfidTag}}
+        <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6 shadow-lg">
+          <div class="flex items-start justify-between">
+            <div class="flex items-start space-x-4">
+              <div class="bg-green-100 p-3 rounded-full">
+                <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-gray-900">RFID Card Linked</h3>
+                <p class="text-sm text-gray-700 mt-1">Your card ending in <span class="font-mono font-bold text-green-700">***{{substring user.rfidTag -4}}</span> is active</p>
+                <p class="text-xs text-gray-600 mt-1">Ready to use at any R3-Cycle machine</p>
+              </div>
+            </div>
+            <a href="/link-rfid" class="bg-white hover:bg-gray-50 text-green-700 border border-green-300 px-4 py-2 rounded-lg text-sm font-medium transition">
+              Manage Card
+            </a>
+          </div>
+        </div>
+        {{else}}
+        <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-xl p-6 shadow-lg">
+          <div class="flex items-start justify-between">
+            <div class="flex items-start space-x-4">
+              <div class="bg-amber-100 p-3 rounded-full">
+                <svg class="h-8 w-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-gray-900">No RFID Card Linked</h3>
+                <p class="text-sm text-gray-700 mt-1">Link your RFID card to start using R3-Cycle machines</p>
+                <p class="text-xs text-gray-600 mt-1">You won't be able to deposit paper without a linked card</p>
+              </div>
+            </div>
+            <a href="/link-rfid" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg text-sm font-semibold transition flex items-center space-x-2">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>Link Card Now</span>
+            </a>
+          </div>
+        </div>
+        {{/if}}
+      </div>
+
       <!-- Main Dashboard Area (2-column layout) -->
       <div class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         
@@ -97,12 +145,11 @@
                 <p class="font-medium text-gray-800">{{this.name}}</p>
                 <p class="text-sm text-gray-500">Cost: <span class="font-bold text-green-600">{{this.cost}} Points</span></p>
               </div>
-              
-              <!-- 
-                This button will be styled as 'disabled' if it has the disabled attribute.
-                Add logic (Handlebars helper or JS) to add 'disabled' if user.points < this.cost
-              -->
-              <button class="py-2 px-4 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+
+              <button
+                onclick="redeemReward('{{this.id}}', {{this.cost}}, '{{this.name}}')"
+                data-cost="{{this.cost}}"
+                class="redeem-btn py-2 px-4 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -219,6 +266,22 @@
 
   <!-- Logout Modal JavaScript -->
   <script>
+    // User points from server (used for redemption validation)
+    const userPoints = {{user.points}};
+
+    // Disable redeem buttons on page load if insufficient points
+    document.addEventListener('DOMContentLoaded', function() {
+      const redeemButtons = document.querySelectorAll('.redeem-btn');
+      redeemButtons.forEach(btn => {
+        const cost = parseInt(btn.getAttribute('data-cost'));
+        if (userPoints < cost) {
+          btn.disabled = true;
+          btn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
+          btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        }
+      });
+    });
+
     // Show logout confirmation modal
     function showLogoutModal() {
       const modal = document.getElementById('logoutModal');
@@ -255,6 +318,81 @@
         }
       }
     });
+
+    // Redemption function
+    async function redeemReward(rewardId, pointsCost, rewardName) {
+      // Confirm with user
+      if (!confirm(`Redeem ${rewardName} for ${pointsCost} points?\n\nYour remaining balance will be: ${userPoints - pointsCost} points`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/redemption/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            rewardType: rewardName,
+            pointsCost: pointsCost
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showNotification('success', `Redemption successful! Your ${rewardName} will be ready at the machine shortly. Remaining points: ${data.redemption.remainingPoints}`);
+
+          // Reload page after 3 seconds to show updated points
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000);
+        } else {
+          showNotification('error', data.message || 'Redemption failed. Please try again.');
+        }
+      } catch (error) {
+        console.error('Redemption error:', error);
+        showNotification('error', 'Network error. Please check your connection and try again.');
+      }
+    }
+
+    // Show notification (toast message)
+    function showNotification(type, message) {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-2xl max-w-md transform transition-all duration-300 ${
+        type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+      }`;
+
+      notification.innerHTML = `
+        <div class="flex items-start space-x-3">
+          <svg class="h-6 w-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            ${type === 'success'
+              ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />'
+              : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />'
+            }
+          </svg>
+          <div class="flex-1">
+            <p class="font-medium">${type === 'success' ? 'Success!' : 'Error'}</p>
+            <p class="text-sm mt-1 opacity-90">${message}</p>
+          </div>
+          <button onclick="this.parentElement.parentElement.remove()" class="text-white hover:text-gray-200">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      `;
+
+      document.body.appendChild(notification);
+
+      // Auto-remove after 5 seconds
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => notification.remove(), 300);
+      }, 5000);
+    }
   </script>
 
 </body>
