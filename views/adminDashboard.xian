@@ -108,30 +108,7 @@
         </h2>
         <div class="bg-white rounded-xl shadow-lg">
           <div class="p-6 space-y-3" id="alertsContainer">
-            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg flex items-start justify-between hover:bg-red-100 transition-colors">
-              <div>
-                <div class="font-semibold text-red-800">Reward Paper Low</div>
-                <div class="text-sm text-red-700">Machine #5 - Coupon bond paper stock at 12%</div>
-                <div class="text-xs text-red-600 mt-1">Alert time: 2:45 PM</div>
-              </div>
-              <button class="text-red-600 hover:text-red-800 font-semibold text-sm transition-colors">Dismiss</button>
-            </div>
-            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg flex items-start justify-between hover:bg-yellow-100 transition-colors">
-              <div>
-                <div class="font-semibold text-yellow-800">Printer Ink Low</div>
-                <div class="text-sm text-yellow-700">Machine #12 - Ink level at 18% (for coupon printing)</div>
-                <div class="text-xs text-yellow-600 mt-1">Alert time: 1:30 PM</div>
-              </div>
-              <button class="text-yellow-600 hover:text-yellow-800 font-semibold text-sm transition-colors">Dismiss</button>
-            </div>
-            <div class="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-lg flex items-start justify-between hover:bg-orange-100 transition-colors">
-              <div>
-                <div class="font-semibold text-orange-800">Machine Offline</div>
-                <div class="text-sm text-orange-700">Machine #18 - No connection for 45 minutes</div>
-                <div class="text-xs text-orange-600 mt-1">Alert time: 12:15 PM</div>
-              </div>
-              <button class="text-orange-600 hover:text-orange-800 font-semibold text-sm transition-colors">Dismiss</button>
-            </div>
+            <div class="text-center text-gray-500 py-4">Loading alerts...</div>
           </div>
         </div>
       </div>
@@ -145,7 +122,7 @@
 
           <!-- Machine Table -->
           <div class="bg-white rounded-xl shadow-lg mt-4 overflow-hidden">
-            <table class="w-full">
+            <table id="machinesTable" class="w-full">
               <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Machine ID</th>
@@ -156,75 +133,8 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200">
-                <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#1</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Online</span></td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm">
-                    <div class="flex items-center gap-2">
-                      <div class="w-24 bg-gray-200 rounded-full h-2">
-                        <div class="bg-green-500 h-2 rounded-full" style="width: 85%"></div>
-                      </div>
-                      <span class="text-xs text-gray-600">85%</span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm">
-                    <div class="flex items-center gap-2">
-                      <div class="w-24 bg-gray-200 rounded-full h-2">
-                        <div class="bg-green-500 h-2 rounded-full" style="width: 90%"></div>
-                      </div>
-                      <span class="text-xs text-gray-600">90%</span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">2 min ago</td>
-                </tr>
-                <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#5</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Online</span></td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm">
-                    <div class="flex items-center gap-2">
-                      <div class="w-24 bg-gray-200 rounded-full h-2">
-                        <div class="bg-red-500 h-2 rounded-full" style="width: 12%"></div>
-                      </div>
-                      <span class="text-xs text-gray-600">12%</span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm">
-                    <div class="flex items-center gap-2">
-                      <div class="w-24 bg-gray-200 rounded-full h-2">
-                        <div class="bg-green-500 h-2 rounded-full" style="width: 75%"></div>
-                      </div>
-                      <span class="text-xs text-gray-600">75%</span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">5 min ago</td>
-                </tr>
-                <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#12</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Online</span></td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm">
-                    <div class="flex items-center gap-2">
-                      <div class="w-24 bg-gray-200 rounded-full h-2">
-                        <div class="bg-green-500 h-2 rounded-full" style="width: 60%"></div>
-                      </div>
-                      <span class="text-xs text-gray-600">60%</span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm">
-                    <div class="flex items-center gap-2">
-                      <div class="w-24 bg-gray-200 rounded-full h-2">
-                        <div class="bg-yellow-500 h-2 rounded-full" style="width: 18%"></div>
-                      </div>
-                      <span class="text-xs text-gray-600">18%</span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">1 min ago</td>
-                </tr>
-                <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#18</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Offline</span></td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">--</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">--</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">45 min ago</td>
+                <tr>
+                  <td colspan="5" class="px-6 py-4 text-center text-gray-500">Loading machines...</td>
                 </tr>
               </tbody>
             </table>
@@ -279,7 +189,7 @@
 
         <!-- User Logs Table -->
         <div class="bg-white rounded-xl shadow-lg mt-4 overflow-hidden">
-          <table class="w-full">
+          <table id="transactionsTable" class="w-full">
             <thead class="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User ID</th>
@@ -291,45 +201,8 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
-              <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">USR-001</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">John Smith</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">9 papers</span></td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">3 bonds</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">5.2 kg</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Today 2:30 PM</td>
-              </tr>
-              <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">USR-042</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">Sarah Johnson</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">6 papers</span></td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">2 bonds</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">3.8 kg</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Today 2:15 PM</td>
-              </tr>
-              <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">USR-156</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">Mike Chen</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">12 papers</span></td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">4 bonds</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">7.1 kg</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Today 1:45 PM</td>
-              </tr>
-              <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">USR-203</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">Emma Davis</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">15 papers</span></td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">5 bonds</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">8.5 kg</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Today 1:20 PM</td>
-              </tr>
-              <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">USR-089</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">Alex Rodriguez</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">3 papers</span></td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">1 bond</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">1.8 kg</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Today 12:50 PM</td>
+              <tr>
+                <td colspan="6" class="px-6 py-4 text-center text-gray-500">Loading transactions...</td>
               </tr>
             </tbody>
           </table>
@@ -342,33 +215,241 @@
   {{> myFooter }}
 
     <script>
-        // Update current time
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true 
-            });
-        }
-        updateTime();
-        setInterval(updateTime, 1000);
+        // ============================================
+        // FIREBASE DATA FETCHING FUNCTIONS
+        // ============================================
 
-        // Simulate user points lookup
-        document.getElementById('userIdInput').addEventListener('change', function() {
-            const userId = this.value;
-            if (userId) {
-                // Simulate fetching user points
-                const points = Math.floor(Math.random() * 5000) + 100;
+        // Fetch system statistics
+        async function fetchSystemStats() {
+            try {
+                const response = await fetch('/api/admin/stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const stats = data.stats;
+                    
+                    // Update stats cards
+                    document.getElementById('totalPapers').textContent = formatNumber(stats.paper.totalRecycled);
+                    document.getElementById('couponBonds').textContent = formatNumber(stats.rewards.totalBondsEarned);
+                    document.getElementById('activeUsers').textContent = formatNumber(stats.users.active);
+                    document.getElementById('pendingAlerts').textContent = stats.alerts.active || 0;
+                }
+            } catch (error) {
+                console.error('Error fetching system stats:', error);
+            }
+        }
+
+        // Fetch machines data
+        async function fetchMachines() {
+            try {
+                const response = await fetch('/api/admin/machines');
+                const data = await response.json();
+                
+                if (data.success && data.machines) {
+                    renderMachinesTable(data.machines);
+                }
+            } catch (error) {
+                console.error('Error fetching machines:', error);
+            }
+        }
+
+        // Render machines table
+        function renderMachinesTable(machines) {
+            const tbody = document.querySelector('#machinesTable tbody') || 
+                         document.querySelector('table tbody');
+            
+            if (!tbody) return;
+
+            tbody.innerHTML = machines.map(machine => {
+                const stockPercentage = machine.stockPercentage || 0;
+                const inkPercentage = machine.inkLevel || 0; // Assuming inkLevel field exists
+                const status = machine.status || 'offline';
+                const statusClass = status === 'online' ? 'bg-green-100 text-green-800' : 
+                                  status === 'offline' ? 'bg-red-100 text-red-800' : 
+                                  'bg-yellow-100 text-yellow-800';
+                const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+                
+                const stockColor = stockPercentage < 20 ? 'bg-red-500' : 
+                                 stockPercentage < 50 ? 'bg-yellow-500' : 'bg-green-500';
+                const inkColor = inkPercentage < 20 ? 'bg-red-500' : 
+                               inkPercentage < 50 ? 'bg-yellow-500' : 'bg-green-500';
+                
+                const lastActivity = machine.lastHeartbeat ? 
+                    formatTimeAgo(new Date(machine.lastHeartbeat)) : 'Never';
+
+                return `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${machine.id || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">${statusText}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <div class="flex items-center gap-2">
+                                <div class="w-24 bg-gray-200 rounded-full h-2">
+                                    <div class="${stockColor} h-2 rounded-full" style="width: ${stockPercentage}%"></div>
+                                </div>
+                                <span class="text-xs text-gray-600">${stockPercentage}%</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <div class="flex items-center gap-2">
+                                <div class="w-24 bg-gray-200 rounded-full h-2">
+                                    <div class="${inkColor} h-2 rounded-full" style="width: ${inkPercentage}%"></div>
+                                </div>
+                                <span class="text-xs text-gray-600">${inkPercentage}%</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${lastActivity}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Fetch transactions
+        async function fetchTransactions() {
+            try {
+                const response = await fetch('/api/admin/transactions?limit=10');
+                const data = await response.json();
+                
+                if (data.success && data.transactions) {
+                    renderTransactionsTable(data.transactions);
+                }
+            } catch (error) {
+                console.error('Error fetching transactions:', error);
+            }
+        }
+
+        // Render transactions table
+        function renderTransactionsTable(transactions) {
+            const tbody = document.querySelector('#transactionsTable tbody') || 
+                         document.querySelectorAll('table tbody')[1];
+            
+            if (!tbody) return;
+
+            if (transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No transactions yet</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = transactions.map(txn => {
+                const timestamp = txn.timestamp ? formatDateTime(new Date(txn.timestamp)) : 'N/A';
+                const weight = txn.weight ? `${(txn.weight / 1000).toFixed(2)} kg` : 'N/A';
+                const papers = txn.pointsAwarded || 0;
+                const bonds = Math.floor(papers / 3);
+
+                return `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${txn.userId?.substring(0, 8) || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${txn.userName || 'Unknown'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">${papers} papers</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">${bonds} bonds</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${weight}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${timestamp}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Fetch alerts
+        async function fetchAlerts() {
+            try {
+                const response = await fetch('/api/admin/alerts?status=active');
+                const data = await response.json();
+                
+                if (data.success && data.alerts) {
+                    renderAlerts(data.alerts);
+                }
+            } catch (error) {
+                console.error('Error fetching alerts:', error);
+            }
+        }
+
+        // Render alerts
+        function renderAlerts(alerts) {
+            const container = document.getElementById('alertsContainer');
+            if (!container) return;
+
+            if (alerts.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-4">No active alerts</div>';
+                return;
+            }
+
+            container.innerHTML = alerts.map(alert => {
+                const severityColors = {
+                    critical: { bg: 'bg-red-50', border: 'border-red-500', text: 'text-red-800', textLight: 'text-red-700', textDark: 'text-red-600', hover: 'hover:bg-red-100', button: 'text-red-600 hover:text-red-800' },
+                    warning: { bg: 'bg-yellow-50', border: 'border-yellow-500', text: 'text-yellow-800', textLight: 'text-yellow-700', textDark: 'text-yellow-600', hover: 'hover:bg-yellow-100', button: 'text-yellow-600 hover:text-yellow-800' },
+                    error: { bg: 'bg-orange-50', border: 'border-orange-500', text: 'text-orange-800', textLight: 'text-orange-700', textDark: 'text-orange-600', hover: 'hover:bg-orange-100', button: 'text-orange-600 hover:text-orange-800' },
+                    info: { bg: 'bg-blue-50', border: 'border-blue-500', text: 'text-blue-800', textLight: 'text-blue-700', textDark: 'text-blue-600', hover: 'hover:bg-blue-100', button: 'text-blue-600 hover:text-blue-800' }
+                };
+
+                const colors = severityColors[alert.severity] || severityColors.warning;
+                const alertTime = alert.createdAt ? formatDateTime(new Date(alert.createdAt)) : 'Unknown';
+
+                return `
+                    <div class="${colors.bg} border-l-4 ${colors.border} p-4 rounded-lg flex items-start justify-between ${colors.hover} transition-colors">
+                        <div>
+                            <div class="font-semibold ${colors.text}">${alert.title || 'Alert'}</div>
+                            <div class="text-sm ${colors.textLight}">${alert.description || 'No description'}</div>
+                            <div class="text-xs ${colors.textDark} mt-1">Alert time: ${alertTime}</div>
+                        </div>
+                        <button onclick="dismissAlert('${alert.id}')" class="${colors.button} font-semibold text-sm transition-colors">Dismiss</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Dismiss alert function
+        async function dismissAlert(alertId) {
+            try {
+                const response = await fetch('/api/admin/dismiss-alert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ alertId })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    // Refresh alerts
+                    await fetchAlerts();
+                    await fetchSystemStats(); // Update alert count
+                } else {
+                    alert('Failed to dismiss alert: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error dismissing alert:', error);
+                alert('Error dismissing alert');
+            }
+        }
+
+        // Fetch user data for points management
+        async function fetchUserData(userId) {
+            try {
+                // You'll need to add an endpoint for this or use the existing user stats endpoint
+                const response = await fetch(`/api/user/stats/${userId}`);
+                const data = await response.json();
+                
+                if (data.success && data.stats) {
+                    const points = data.stats.currentPoints || 0;
                 document.getElementById('currentPoints').textContent = points;
-                // Calculate coupon bond progress (3 papers = 1 bond)
                 const papersCount = points % 3;
                 document.getElementById('couponProgress').textContent = `${papersCount} / 3 papers`;
+                } else {
+                    document.getElementById('currentPoints').textContent = '0';
+                    document.getElementById('couponProgress').textContent = '0 / 3 papers';
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                document.getElementById('currentPoints').textContent = '0';
+                document.getElementById('couponProgress').textContent = '0 / 3 papers';
             }
-        });
+        }
 
-        // Adjust points function
-        function adjustPoints() {
+        // Adjust points function (connected to Firebase)
+        async function adjustPoints() {
             const userId = document.getElementById('userIdInput').value;
             const amount = parseInt(document.getElementById('pointsAmount').value);
             const action = document.getElementById('pointsAction').value;
@@ -379,37 +460,114 @@
                 return;
             }
 
-            const currentPoints = parseInt(document.getElementById('currentPoints').textContent);
-            const newPoints = action === 'add' ? currentPoints + amount : currentPoints - amount;
+            const adjustment = action === 'add' ? amount : -amount;
 
-            if (newPoints < 0) {
-                alert('Cannot remove more points than user has');
-                return;
-            }
+            try {
+                const response = await fetch('/api/admin/adjust-points', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId,
+                        adjustment,
+                        reason
+                    })
+                });
 
-            // Update display
-            document.getElementById('currentPoints').textContent = newPoints;
-            // Update coupon bond progress display
-            const papersCount = newPoints % 3;
-            document.getElementById('couponProgress').textContent = `${papersCount} / 3 papers`;
-
-            // Show confirmation
-            alert(`✓ Successfully ${action === 'add' ? 'added' : 'removed'} ${amount} papers to ${userId}\nReason: ${reason}\nNew total: ${newPoints} papers\nCoupon bonds earned: ${Math.floor(newPoints / 3)}`);
+                const data = await response.json();
+                if (data.success) {
+                    alert(`✓ Successfully ${action === 'add' ? 'added' : 'removed'} ${amount} points\nReason: ${reason}\nNew balance: ${data.adjustment.newBalance} points`);
+                    
+                    // Refresh user data
+                    await fetchUserData(userId);
 
             // Reset form
             document.getElementById('pointsAmount').value = '';
             document.getElementById('pointsReason').value = '';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error adjusting points:', error);
+                alert('Error adjusting points');
+            }
         }
 
-        // Dismiss alert functionality
-        document.querySelectorAll('button').forEach(btn => {
-            if (btn.textContent === 'Dismiss') {
-                btn.addEventListener('click', function() {
-                    this.closest('div').style.opacity = '0.5';
-                    this.closest('div').style.textDecoration = 'line-through';
-                    this.disabled = true;
-                });
+        // Utility functions
+        function formatNumber(num) {
+            return new Intl.NumberFormat('en-US').format(num);
+        }
+
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins} min ago`;
+            const diffHours = Math.floor(diffMins / 60);
+            if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+            const diffDays = Math.floor(diffHours / 24);
+            return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+        }
+
+        function formatDateTime(date) {
+            return new Intl.DateTimeFormat('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            }).format(date);
+        }
+
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        }
+
+        // User points lookup
+        document.getElementById('userIdInput').addEventListener('change', function() {
+            const userId = this.value;
+            if (userId) {
+                fetchUserData(userId);
+            } else {
+                document.getElementById('currentPoints').textContent = '0';
+                document.getElementById('couponProgress').textContent = '0 / 3 papers';
             }
+        });
+
+        // Load all data on page load
+        async function loadDashboardData() {
+            await Promise.all([
+                fetchSystemStats(),
+                fetchMachines(),
+                fetchTransactions(),
+                fetchAlerts()
+            ]);
+        }
+
+        // Auto-refresh every 30 seconds
+        let refreshInterval;
+
+        function startAutoRefresh() {
+            refreshInterval = setInterval(() => {
+                loadDashboardData();
+            }, 30000); // 30 seconds
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTime();
+            setInterval(updateTime, 1000);
+            loadDashboardData();
+            startAutoRefresh();
         });
 
         // ============================================
