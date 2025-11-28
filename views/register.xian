@@ -61,10 +61,42 @@
       {{/if}}
 
       <!-- Registration Form -->
-      <form class="mt-6" method="POST" action="/register">
+      <form class="mt-6" method="POST" action="/register" id="registerForm">
+
+        <!-- RFID Card Input -->
+        <div class="mb-4">
+          <label for="rfidTag" class="block text-sm font-medium text-gray-700 mb-2">
+            RFID Card Number <span class="text-red-500">*</span>
+          </label>
+          <div class="flex gap-2">
+            <input
+              type="text"
+              name="rfidTag"
+              id="rfidTag"
+              placeholder="Scan your RFID card or enter manually"
+              class="flex-1 px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 transition-shadow font-mono uppercase"
+              required
+              readonly
+            />
+            <button
+              type="button"
+              id="scanRfidBtn"
+              class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+              <span id="scanRfidBtnText">Scan Card</span>
+            </button>
+          </div>
+          <div id="rfidStatus" class="mt-2 text-sm"></div>
+          <p class="mt-1 text-xs text-gray-500">
+            Click "Scan Card" and tap your RFID card on the reader. The card number will be automatically filled.
+          </p>
+        </div>
 
         <!-- Name Input -->
-        <div>
+        <div class="mt-4">
           <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
           <input
             type="text"
@@ -92,15 +124,34 @@
         <!-- Password Input -->
         <div class="mt-4">
           <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-          <input
-            type="password"
-            name="password"
-            id="password"
-            placeholder="••••••••"
-            class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 transition-shadow"
-            required
-            minlength="6"
-          />
+          <div class="relative mt-1" style="position: relative;">
+            <input
+              type="password"
+              name="password"
+              id="password"
+              placeholder="••••••••"
+              class="block w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 transition-shadow"
+              required
+              minlength="6"
+            />
+            <button
+              type="button"
+              id="togglePassword"
+              style="position: absolute; top: 0; right: 0; bottom: 0; display: flex; align-items: center; padding-right: 12px; z-index: 10; background: transparent; border: none; cursor: pointer;"
+              class="text-gray-500 hover:text-gray-700 focus:outline-none"
+              aria-label="Toggle password visibility"
+            >
+              <!-- Eye open icon (shown when password is hidden) -->
+              <svg id="eyeOpenIcon" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <!-- Eye closed icon (shown when password is visible) -->
+              <svg id="eyeClosedIcon" class="h-5 w-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+              </svg>
+            </button>
+          </div>
           <p class="mt-1 text-xs text-gray-500">Password must be at least 6 characters</p>
         </div>
 
@@ -129,5 +180,307 @@
   </main>
 
   {{> myFooter }}
+
+  <!-- Socket.io Client Library -->
+  <script src="/socket.io/socket.io.js"></script>
+
+  <script>
+    // RFID Scanning via WebSocket
+    let socket;
+    let scanningActive = false;
+
+    // Initialize Socket.io connection
+    function initSocket() {
+      console.log('[Socket] Initializing Socket.io connection...');
+      
+      // Connect to Socket.io server
+      socket = io({
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000
+      });
+      
+      socket.on('connect', () => {
+        console.log('[Socket] ✅ Connected to server, Socket ID:', socket.id);
+        console.log('[Socket] Connection details:', {
+          connected: socket.connected,
+          id: socket.id,
+          transport: socket.io.engine.transport.name
+        });
+        
+        // Clear any previous error messages
+        const statusDiv = document.getElementById('rfidStatus');
+        if (statusDiv) {
+          statusDiv.innerHTML = '';
+        }
+        
+        // Test connection by emitting a test event
+        socket.emit('test_connection', { test: 'from_register_page' });
+        console.log('[Socket] Test connection event emitted');
+      });
+      
+      socket.on('connect_error', (error) => {
+        console.error('[Socket] Connection error:', error);
+        updateRfidStatus('error', 'Failed to connect to server. Please refresh the page.');
+      });
+      
+      socket.on('disconnect', (reason) => {
+        console.warn('[Socket] Disconnected:', reason);
+        updateRfidStatus('warning', 'Disconnected from server. Reconnecting...');
+      });
+      
+      socket.on('reconnect', (attemptNumber) => {
+        console.log('[Socket] Reconnected after', attemptNumber, 'attempts');
+        updateRfidStatus('success', 'Reconnected to server');
+      });
+      
+      // Test connection response
+      socket.on('test_connection_response', (data) => {
+        console.log('[Socket] ✅ Test connection response received:', data);
+      });
+
+      socket.on('rfid_scan_result', (data) => {
+        console.log('[RFID] Scan result received:', data);
+        
+        // Clear response timeout
+        if (socket.responseTimeout) {
+          clearTimeout(socket.responseTimeout);
+          delete socket.responseTimeout;
+        }
+        
+        if (data.success && data.rfidTag) {
+          // RFID detected - fill the field
+          const rfidInput = document.getElementById('rfidTag');
+          rfidInput.value = data.rfidTag;
+          rfidInput.removeAttribute('readonly');
+          
+          // Update status
+          updateRfidStatus('success', `RFID card detected: ${data.rfidTag}`);
+          
+          // Stop scanning
+          stopScanning();
+          
+          // Check if RFID is already registered
+          checkRfidExists(data.rfidTag);
+        } else {
+          console.error('[RFID] Scan failed:', data.message);
+          updateRfidStatus('error', data.message || 'Failed to scan RFID card');
+          stopScanning();
+        }
+      });
+      
+      // Handle any Socket.io errors
+      socket.on('error', (error) => {
+        console.error('[Socket] Socket error:', error);
+        updateRfidStatus('error', 'Socket error occurred. Please try again.');
+      });
+
+      socket.on('disconnect', () => {
+        console.log('Disconnected from server');
+        if (scanningActive) {
+          stopScanning();
+          updateRfidStatus('error', 'Connection lost. Please try again.');
+        }
+      });
+    }
+
+    // Start RFID scanning
+    function startScanning() {
+      if (!socket || !socket.connected) {
+        updateRfidStatus('error', 'Not connected to server. Please refresh the page.');
+        console.error('[RFID] Cannot start scan - socket not connected');
+        return;
+      }
+
+      console.log('[RFID] Starting scan process...');
+      console.log('[RFID] Socket status - Connected:', socket.connected, 'ID:', socket.id);
+      
+      scanningActive = true;
+      const scanBtn = document.getElementById('scanRfidBtn');
+      const scanBtnText = document.getElementById('scanRfidBtnText');
+      
+      scanBtn.disabled = true;
+      scanBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+      scanBtn.classList.add('bg-blue-400', 'cursor-not-allowed');
+      scanBtnText.innerHTML = '<span class="animate-pulse">Scanning...</span>';
+      
+      updateRfidStatus('info', 'Waiting for RFID card... Please tap your card on the reader.');
+
+      // Request RFID scan from server (server will forward to Raspberry Pi)
+      console.log('[RFID] Emitting request_rfid_scan event...');
+      
+      try {
+        socket.emit('request_rfid_scan', {
+          source: 'registration',
+          timeout: 30000 // 30 seconds timeout
+        });
+        
+        console.log('[RFID] Scan request emitted successfully');
+      } catch (error) {
+        console.error('[RFID] Error emitting scan request:', error);
+        updateRfidStatus('error', 'Failed to send scan request: ' + error.message);
+        stopScanning();
+        return;
+      }
+      
+      // Set timeout to check if no response
+      const responseTimeout = setTimeout(() => {
+        if (scanningActive) {
+          console.warn('[RFID] No response after 10 seconds - this might indicate no machine is connected');
+          updateRfidStatus('warning', 'No response from server. Please check if Raspberry Pi is running and connected.');
+        }
+      }, 10000);
+      
+      // Store timeout for cleanup
+      socket.responseTimeout = responseTimeout;
+    }
+
+    // Stop RFID scanning
+    function stopScanning() {
+      scanningActive = false;
+      const scanBtn = document.getElementById('scanRfidBtn');
+      const scanBtnText = document.getElementById('scanRfidBtnText');
+      
+      scanBtn.disabled = false;
+      scanBtn.classList.remove('bg-blue-400', 'cursor-not-allowed');
+      scanBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+      scanBtnText.textContent = 'Scan Card';
+
+      // Cancel scan request
+      if (socket && socket.connected) {
+        socket.emit('cancel_rfid_scan');
+      }
+    }
+
+    // Update RFID status message
+    function updateRfidStatus(type, message) {
+      const statusDiv = document.getElementById('rfidStatus');
+      let bgColor, textColor, icon;
+
+      switch (type) {
+        case 'success':
+          bgColor = 'bg-green-50';
+          textColor = 'text-green-700';
+          icon = '<svg class="h-5 w-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+          break;
+        case 'error':
+          bgColor = 'bg-red-50';
+          textColor = 'text-red-700';
+          icon = '<svg class="h-5 w-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+          break;
+        case 'warning':
+          bgColor = 'bg-yellow-50';
+          textColor = 'text-yellow-700';
+          icon = '<svg class="h-5 w-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>';
+          break;
+        default:
+          bgColor = 'bg-blue-50';
+          textColor = 'text-blue-700';
+          icon = '<svg class="h-5 w-5 inline mr-1 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+      }
+
+      statusDiv.className = `mt-2 p-3 rounded-lg ${bgColor} ${textColor} text-sm flex items-center`;
+      statusDiv.innerHTML = `${icon} ${message}`;
+    }
+
+    // Check if RFID already exists in system
+    async function checkRfidExists(rfidTag) {
+      try {
+        const response = await fetch(`/api/rfid/check?rfidTag=${encodeURIComponent(rfidTag)}`);
+        const data = await response.json();
+
+        if (data.exists) {
+          updateRfidStatus('error', 'This RFID card is already registered. Please use a different card or login instead.');
+          document.getElementById('rfidTag').value = '';
+          return false;
+        } else {
+          updateRfidStatus('success', 'RFID card is available for registration.');
+          return true;
+        }
+      } catch (error) {
+        console.error('Error checking RFID:', error);
+        // Continue anyway - validation will happen on server
+        return true;
+      }
+    }
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize socket connection
+      initSocket();
+
+      // Scan RFID button
+      const scanBtn = document.getElementById('scanRfidBtn');
+      if (scanBtn) {
+        scanBtn.addEventListener('click', () => {
+          console.log('[RFID] Scan button clicked');
+          console.log('[RFID] Socket state:', {
+            exists: !!socket,
+            connected: socket ? socket.connected : false,
+            id: socket ? socket.id : 'N/A'
+          });
+          
+          if (scanningActive) {
+            stopScanning();
+          } else {
+            startScanning();
+          }
+        });
+        console.log('[RFID] Scan button event listener attached');
+      } else {
+        console.error('[RFID] Scan button not found!');
+      }
+
+      // Manual entry (remove readonly if user types)
+      document.getElementById('rfidTag').addEventListener('input', (e) => {
+        e.target.value = e.target.value.toUpperCase();
+        if (e.target.value.length > 0) {
+          e.target.removeAttribute('readonly');
+        }
+      });
+
+      // Form submission validation
+      document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        const rfidTag = document.getElementById('rfidTag').value.trim();
+        
+        if (!rfidTag) {
+          e.preventDefault();
+          updateRfidStatus('error', 'Please scan your RFID card or enter it manually.');
+          return false;
+        }
+
+        // Check if RFID is already registered before submitting
+        const isAvailable = await checkRfidExists(rfidTag);
+        if (!isAvailable) {
+          e.preventDefault();
+          return false;
+        }
+      });
+
+      // Password toggle functionality
+      const passwordInput = document.getElementById('password');
+      const toggleButton = document.getElementById('togglePassword');
+      const eyeOpenIcon = document.getElementById('eyeOpenIcon');
+      const eyeClosedIcon = document.getElementById('eyeClosedIcon');
+
+      if (toggleButton && passwordInput) {
+        toggleButton.addEventListener('click', function() {
+          // Toggle input type
+          const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+          passwordInput.setAttribute('type', type);
+
+          // Toggle icons
+          if (type === 'text') {
+            eyeOpenIcon.classList.add('hidden');
+            eyeClosedIcon.classList.remove('hidden');
+          } else {
+            eyeOpenIcon.classList.remove('hidden');
+            eyeClosedIcon.classList.add('hidden');
+          }
+        });
+      }
+    });
+  </script>
 </body>
 </html>

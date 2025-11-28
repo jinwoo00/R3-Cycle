@@ -11,7 +11,7 @@ Last Updated: 2025-11-21
 # ============================================
 
 # Backend server URL (change to your actual server IP/domain)
-API_BASE_URL = "http://192.168.1.18:3000/api"  # Backend server IP
+API_BASE_URL = "http://192.168.1.100:3000/api"  # TODO: Update with your server IP
 
 # Machine authentication credentials
 MACHINE_ID = "RPI_001"
@@ -38,20 +38,18 @@ PIN_LOAD_CELL_DT = 5    # Data pin
 PIN_LOAD_CELL_SCK = 6   # Clock pin
 
 # IR Obstacle Sensor
-PIN_IR_SENSOR = 27      # Digital input (LOW/0 when object detected, HIGH/1 when clear) - Pin 13 (GPIO27)
+PIN_IR_SENSOR = 27      # Digital output (HIGH when paper detected) - Pin 13
 
 # Inductive Proximity Sensor (Metal Detection) - LJ12A3 via Logic Level Converter
-PIN_INDUCTIVE_SENSOR = 17  # Digital output (HIGH when metal detected) - Pin 11 (GPIO17) via Logic Level Converter
+PIN_INDUCTIVE_SENSOR = 17  # Digital output (HIGH when metal detected) - Pin 11 (via LLC HV1→LV1)
 
 # Servo Motors (PWM-capable pins)
-PIN_SERVO_COLLECTION = 18   # Servo #1 - Plastic bin servo - GPIO 18 (Physical Pin 12)
-PIN_SERVO_REWARD = 13       # Servo #2 - Paper bin servo - GPIO 13 (Physical Pin 33)
+PIN_SERVO_COLLECTION = 18   # Servo #1 - Paper collection mechanism
+PIN_SERVO_REWARD = 23       # Servo #2 - Reward dispenser
 
 # LED Indicators
-PIN_LED_RED = 22        # Error/rejection indicator / IR sensor status LED - Pin 15 (GPIO22)
-# Note: LED_IR was originally on GPIO27, but GPIO27 is now used by IR sensor
-# Using only GPIO22 for LED control (matching official wiring: LED can be on GPIO22)
-# If second LED is needed, consider using a different GPIO pin
+PIN_LED_RED = 22        # Error/rejection indicator - Pin 15 (using GPIO22, not GPIO27 to avoid conflict with IR sensor)
+# Note: GPIO27 is also an option, but GPIO22 is recommended to avoid conflict with IR sensor on GPIO27
 
 # LCD Display (I2C)
 # SDA = GPIO 2 (handled by I2C library) - Pin 3
@@ -76,13 +74,12 @@ LOAD_CELL_REFERENCE_UNIT = 1  # Calibration factor (adjust after calibration)
 # 2. Place known weight (e.g., 100g) on sensor → record raw value
 # 3. Calculate: REFERENCE_UNIT = (raw_with_weight - raw_zero) / known_weight
 
-# Paper counting configuration
-POINTS_PER_PAPER = 10  # Points awarded per paper inserted
-MAX_PAPERS_PER_TRANSACTION = 50  # Maximum papers per transaction (safety limit)
+# Weight thresholds (grams)
+MIN_WEIGHT = 1.0        # Minimum valid paper weight
+MAX_WEIGHT = 20.0       # Maximum valid paper weight
 
-# Paper detection timing
-PAPER_DETECTION_DELAY = 0.5  # Delay between paper detections (seconds) - prevents double counting
-PAPER_INSERTION_INACTIVITY_TIMEOUT = 10.0  # Seconds of inactivity before computing total papers and submitting
+# Load cell settling time (seconds)
+LOAD_CELL_SETTLE_TIME = 2.0  # Wait for weight to stabilize
 
 # ============================================
 # TIMING CONFIGURATION
@@ -95,62 +92,33 @@ HEARTBEAT_INTERVAL = 60  # Send status update every 60 seconds
 REDEMPTION_POLL_INTERVAL = 5  # Check for pending redemptions every 5 seconds
 
 # RFID scan timeout (seconds)
-# Best Practice: Set to None for infinite wait - RFID scanning is the idle state
-# The reader will wait indefinitely until a card is detected (no timeout)
-RFID_TIMEOUT = None       # Infinite wait - continuous RFID scanning (idle state)
+RFID_TIMEOUT = 30       # Maximum time to wait for RFID card
 
-# Transaction timeout (seconds) - applies to active transaction steps only
-TRANSACTION_TIMEOUT = 120  # Maximum time for paper insertion and processing
-
-# Paper insertion timeout (seconds) - specific timeout for waiting for paper after RFID scan
-PAPER_INSERTION_TIMEOUT = 30  # User has 30 seconds to insert paper after scanning RFID
+# Transaction timeout (seconds)
+TRANSACTION_TIMEOUT = 60  # Maximum time for complete transaction flow
 
 # Sensor read retry attempts
 SENSOR_RETRY_ATTEMPTS = 3
 
 # ============================================
-# SERVO MOTOR CONFIGURATION (POSITION SERVO - SG90)
+# SERVO MOTOR CONFIGURATION
 # ============================================
 
 # Servo PWM frequency (Hz)
-SERVO_FREQUENCY = 50    # Standard servo frequency (50Hz for SG90)
+SERVO_FREQUENCY = 50    # Standard servo frequency
 
-# Position Servo Configuration (Tower Pro SG90)
-# Standard position servo with 0-180 degree range
-# 
-# SG90 Servo Specifications:
-# - Type: Standard Position Servo
-# - Rotation Range: 0-180 degrees (limited rotation)
-# - Control: Position-based (angle-controlled)
-# - PWM Duty Cycle Mapping:
-#   - 2.5% (0.5ms) = 0 degrees
-#   - 7.5% (1.5ms) = 90 degrees (center/idle)
-#   - 12.5% (2.5ms) = 180 degrees
-# 
-# Physical Setup for Synchronized Opposite Rotation (SWAPPED):
-# - Servo #1 (Pin 12/GPIO 18): Starts at 180°, rotates to 0° (counter-clockwise)
-# - Servo #2 (Pin 33/GPIO 13): Starts at 0°, rotates to 180° (clockwise)
-# - Both servos move simultaneously in opposite directions for synchronized dispensing
-# - After each cycle, servos return to original start positions (180° and 0°), then to idle (90°)
+# Servo positions (degrees, 0-180)
+# Paper collection servo
+SERVO_COLLECTION_IDLE = 0
+SERVO_COLLECTION_COLLECT = 90
 
-# Servo #1 (Collection/Roller 1) - Pin 12, GPIO 18
-SERVO_COLLECTION_IDLE = 90             # Idle/center position (degrees)
-SERVO_COLLECTION_START = 180           # Start position for dispensing (degrees) - SWAPPED: now starts at 180°
-SERVO_COLLECTION_END = 0               # End position for dispensing (degrees) - SWAPPED: now ends at 0°
-
-# Servo #2 (Reward/Roller 2) - Pin 33, GPIO 13
-SERVO_REWARD_IDLE = 90                 # Idle/center position (degrees)
-SERVO_REWARD_START = 0                 # Start position for dispensing (degrees) - SWAPPED: now starts at 0°
-SERVO_REWARD_END = 180                 # End position for dispensing (degrees) - SWAPPED: now ends at 180°
-
-# Dispensing configuration (Synchronized Opposite Rotation)
-SERVO_DISPENSE_ANGLE_STEP = 5          # Degrees per step (smaller = smoother, larger = faster)
-SERVO_DISPENSE_STEP_DELAY = 0.02       # Delay between steps (seconds) - adjust for speed
-SERVO_DISPENSE_CYCLES = 1              # Number of complete cycles (0°↔180°) per dispense
+# Reward dispenser servo
+SERVO_REWARD_IDLE = 0
+SERVO_REWARD_DISPENSE = 90
 
 # Servo movement timing (seconds)
-SERVO_MOVE_DELAY = 0.1                 # Delay after setting angle (for servo to reach position)
-SERVO_RETURN_DELAY = 0.5               # Delay before returning to idle after dispensing
+SERVO_MOVE_DURATION = 1.0    # Time to hold servo at target position
+SERVO_RETURN_DURATION = 0.5  # Time to return to idle
 
 # ============================================
 # LCD DISPLAY MESSAGES
@@ -169,11 +137,6 @@ LCD_MSG_RFID_DETECTED = [
 LCD_MSG_USER_VERIFIED = [
     "Hello {name}!",
     "Insert paper"
-]
-
-LCD_MSG_PAPER_DETECTED = [
-    "Paper Detected!",
-    "Processing..."
 ]
 
 LCD_MSG_WEIGHING = [
@@ -206,29 +169,9 @@ LCD_MSG_ERROR = [
     "Try again later"
 ]
 
-LCD_MSG_CARD_NOT_REGISTERED = [
-    "Card Not Found",
-    "Register at website"
-]
-
 LCD_MSG_DISPENSING = [
     "Dispensing",
     "Reward..."
-]
-
-LCD_MSG_REDEMPTION_PENDING = [
-    "Redeeming Reward",
-    "Please wait..."
-]
-
-LCD_MSG_REDEMPTION_DISPENSING = [
-    "Dispensing",
-    "{count} paper(s)..."
-]
-
-LCD_MSG_REDEMPTION_COMPLETE = [
-    "Dispensed!",
-    "{count} paper(s)"
 ]
 
 LCD_MSG_OFFLINE = [
@@ -266,7 +209,7 @@ STOCK_WARNING_THRESHOLD = 50   # Warning when below 50%
 # ============================================
 
 # Log file path
-LOG_FILE = "/home/r3cycle/r3cycle/logs/r3cycle.log"
+LOG_FILE = "/home/pi/r3cycle/r3cycle.log"
 
 # Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 LOG_LEVEL = "INFO"
@@ -304,7 +247,7 @@ SKIP_GPIO_INIT = False
 OFFLINE_MODE_ENABLED = True
 
 # SQLite database path
-SQLITE_DB_PATH = "/home/r3cycle/r3cycle/offline.db"
+SQLITE_DB_PATH = "/home/pi/r3cycle/offline.db"
 
 # Sync interval when online (seconds)
 SYNC_INTERVAL = 300  # Sync every 5 minutes
@@ -355,15 +298,14 @@ def validate_config():
     if not API_BASE_URL or API_BASE_URL == "http://192.168.1.100:3000/api":
         errors.append("WARNING: API_BASE_URL not configured - update with your server IP")
 
-    # Validate paper count configuration
-    if POINTS_PER_PAPER <= 0:
-        errors.append("POINTS_PER_PAPER must be positive")
+    # Validate weight thresholds
+    if MIN_WEIGHT >= MAX_WEIGHT:
+        errors.append("MIN_WEIGHT must be less than MAX_WEIGHT")
 
-    if MAX_PAPERS_PER_TRANSACTION <= 0:
-        errors.append("MAX_PAPERS_PER_TRANSACTION must be positive")
+    if MIN_WEIGHT < 0 or MAX_WEIGHT < 0:
+        errors.append("Weight thresholds must be positive")
 
     # Validate GPIO pins (must be unique)
-    # Note: Load cell and inductive sensor pins are kept for reference but not used
     gpio_pins = [
         PIN_RFID_RST, PIN_LOAD_CELL_DT, PIN_LOAD_CELL_SCK,
         PIN_IR_SENSOR, PIN_INDUCTIVE_SENSOR,
@@ -373,24 +315,12 @@ def validate_config():
     if len(gpio_pins) != len(set(gpio_pins)):
         errors.append("GPIO pin conflict detected - pins must be unique")
 
-    # Validate servo positions (SG90: 0-180 degrees)
+    # Validate servo positions
     if not (0 <= SERVO_COLLECTION_IDLE <= 180):
         errors.append("SERVO_COLLECTION_IDLE must be 0-180 degrees")
-    
-    if not (0 <= SERVO_COLLECTION_START <= 180):
-        errors.append("SERVO_COLLECTION_START must be 0-180 degrees")
-    
-    if not (0 <= SERVO_COLLECTION_END <= 180):
-        errors.append("SERVO_COLLECTION_END must be 0-180 degrees")
 
     if not (0 <= SERVO_REWARD_IDLE <= 180):
         errors.append("SERVO_REWARD_IDLE must be 0-180 degrees")
-    
-    if not (0 <= SERVO_REWARD_START <= 180):
-        errors.append("SERVO_REWARD_START must be 0-180 degrees")
-    
-    if not (0 <= SERVO_REWARD_END <= 180):
-        errors.append("SERVO_REWARD_END must be 0-180 degrees")
 
     # Print warnings
     for error in errors:

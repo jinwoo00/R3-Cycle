@@ -177,7 +177,7 @@ class DatabaseManager:
         Queue transaction for later sync (offline mode)
 
         Args:
-            transaction_data: Dict with keys: rfid_tag, paper_count,
+            transaction_data: Dict with keys: rfid_tag, weight, metal_detected,
                             points_earned, timestamp
 
         Returns:
@@ -186,12 +186,13 @@ class DatabaseManager:
         try:
             self.cursor.execute('''
                 INSERT INTO pending_transactions (
-                    rfid_tag, paper_count, points_earned,
+                    rfid_tag, weight, metal_detected, points_earned,
                     timestamp, sync_status, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
             ''', (
                 transaction_data.get('rfid_tag'),
-                transaction_data.get('paper_count', 1),
+                transaction_data.get('weight'),
+                transaction_data.get('metal_detected', False),
                 transaction_data.get('points_earned', 0),
                 transaction_data.get('timestamp'),
                 'pending',  # Initial status
@@ -231,58 +232,19 @@ class DatabaseManager:
             self.cursor.execute(query)
             rows = self.cursor.fetchall()
 
-            # Get column names from cursor description
-            column_names = [desc[0] for desc in self.cursor.description] if self.cursor.description else []
-            has_paper_count = 'paper_count' in column_names
-            has_weight = 'weight' in column_names
-
             transactions = []
             for row in rows:
-                try:
-                    # Handle new schema (paper_count) vs old schema (weight/metal_detected)
-                    if has_paper_count:
-                        # New schema - use paper_count
-                        paper_count = row['paper_count'] if row['paper_count'] is not None else 1
-                        transactions.append({
-                            'id': row['id'],
-                            'rfid_tag': row['rfid_tag'],
-                            'paper_count': paper_count,
-                            'points_earned': row['points_earned'] if row['points_earned'] is not None else 0,
-                            'timestamp': row['timestamp'],
-                            'sync_status': row['sync_status'] if row['sync_status'] else 'pending',
-                            'retry_count': row['retry_count'] if row['retry_count'] is not None else 0,
-                            'created_at': row['created_at']
-                        })
-                    elif has_weight:
-                        # Old schema detected - mark these transactions as failed and skip
-                        print(f"[DB WARNING] Transaction {row['id']} uses old schema (weight/metal_detected) - marking as failed")
-                        try:
-                            self.cursor.execute('''
-                                UPDATE pending_transactions
-                                SET sync_status = 'failed',
-                                    last_error = 'Incompatible schema - old transaction format (weight/metal_detected)'
-                                WHERE id = ?
-                            ''', (row['id'],))
-                            self.conn.commit()
-                        except Exception as e:
-                            print(f"[DB ERROR] Failed to mark old transaction as failed: {e}")
-                        continue
-                    else:
-                        # Unknown schema - skip
-                        print(f"[DB WARNING] Transaction {row['id']} has unknown schema - skipping")
-                        continue
-                        
-                except KeyError as e:
-                    # Missing required field - skip this transaction
-                    tx_id = row['id'] if 'id' in row.keys() else 'unknown'
-                    print(f"[DB ERROR] Transaction {tx_id} missing required field: {e}")
-                    continue
-                except Exception as e:
-                    tx_id = row['id'] if 'id' in row.keys() else 'unknown'
-                    print(f"[DB ERROR] Error processing transaction {tx_id}: {e}")
-                    import traceback
-                    traceback.print_exc()
-                    continue
+                transactions.append({
+                    'id': row['id'],
+                    'rfid_tag': row['rfid_tag'],
+                    'weight': row['weight'],
+                    'metal_detected': bool(row['metal_detected']),
+                    'points_earned': row['points_earned'],
+                    'timestamp': row['timestamp'],
+                    'sync_status': row['sync_status'],
+                    'retry_count': row['retry_count'],
+                    'created_at': row['created_at']
+                })
 
             return transactions
 

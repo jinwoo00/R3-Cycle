@@ -27,13 +27,12 @@ import {
   limit
 } from "firebase/firestore";
 import {
-  validatePaperWeight,
-  checkMetalDetection,
   calculatePoints,
   validateRfidTag,
   validateMachineId,
   validateTimestamp,
-  validateSensorHealth
+  validateSensorHealth,
+  checkRedemptionEligibility
 } from "../utils/validation.js";
 
 /**
@@ -97,6 +96,8 @@ export const verifyRfid = async (req, res) => {
     }
 
     // Return user information
+    // Note: sync.py expects a 'user' object, but main.py expects flat structure
+    // Return both formats for compatibility
     return res.json({
       success: true,
       valid: true,
@@ -104,7 +105,16 @@ export const verifyRfid = async (req, res) => {
       userName: userData.name,
       currentPoints: userData.currentPoints || 0,
       totalTransactions: userData.totalTransactions || 0,
-      message: `Welcome, ${userData.name}!`
+      message: `Welcome, ${userData.name}!`,
+      // Also include nested user object for sync.py compatibility
+      user: {
+        userId: userId,
+        name: userData.name,
+        current_points: userData.currentPoints || 0,
+        currentPoints: userData.currentPoints || 0,
+        total_transactions: userData.totalTransactions || 0,
+        totalTransactions: userData.totalTransactions || 0
+      }
     });
 
   } catch (error) {
@@ -120,17 +130,16 @@ export const verifyRfid = async (req, res) => {
 /**
  * POST /api/transaction/submit
  * Record paper deposit transaction from Raspberry Pi
- * Validates weight and metal detection, awards points
+ * Awards points based on paper count
  *
  * @param {string} req.body.rfidTag - User's RFID tag
- * @param {number} req.body.weight - Paper weight in grams
- * @param {boolean} req.body.metalDetected - Metal sensor reading
+ * @param {number} req.body.paperCount - Number of papers inserted
  * @param {string} req.body.timestamp - ISO timestamp
  * @returns {object} Transaction result
  */
 export const submitTransaction = async (req, res) => {
   try {
-    const { rfidTag, weight, metalDetected, timestamp } = req.body;
+    const { rfidTag, paperCount, timestamp } = req.body;
     const machineId = req.headers['x-machine-id'];
 
     // Validate inputs
@@ -151,6 +160,15 @@ export const submitTransaction = async (req, res) => {
       });
     }
 
+    // Validate paper count
+    if (typeof paperCount !== 'number' || paperCount < 1 || paperCount > 50) {
+      return res.status(400).json({
+        success: false,
+        accepted: false,
+        message: "Invalid paper count (must be 1-50)"
+      });
+    }
+
     // Find user by RFID
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("rfidTag", "==", rfidTag));
@@ -167,74 +185,15 @@ export const submitTransaction = async (req, res) => {
     const userDoc = querySnapshot.docs[0];
     const userId = userDoc.id;
 
-    // Validate weight
-    const weightValidation = validatePaperWeight(weight);
-    if (!weightValidation.valid) {
-      // Create rejection record
-      const transactionRef = await addDoc(collection(db, "transactions"), {
-        userId: userId,
-        rfidTag: rfidTag,
-        machineId: machineId,
-        weight: weight,
-        weightUnit: "grams",
-        weightValid: false,
-        metalDetected: metalDetected,
-        pointsAwarded: 0,
-        status: "rejected",
-        rejectionReason: weightValidation.reason,
-        timestamp: Timestamp.fromDate(new Date(timestamp)),
-        syncedAt: Timestamp.now()
-      });
-
-      return res.json({
-        success: true,
-        accepted: false,
-        reason: weightValidation.reason,
-        message: weightValidation.reason,
-        transactionId: transactionRef.id
-      });
-    }
-
-    // Check metal detection
-    const metalCheck = checkMetalDetection(metalDetected);
-    if (!metalCheck.accepted) {
-      // Create rejection record
-      const transactionRef = await addDoc(collection(db, "transactions"), {
-        userId: userId,
-        rfidTag: rfidTag,
-        machineId: machineId,
-        weight: weight,
-        weightUnit: "grams",
-        weightValid: true,
-        metalDetected: true,
-        pointsAwarded: 0,
-        status: "rejected",
-        rejectionReason: metalCheck.reason,
-        timestamp: Timestamp.fromDate(new Date(timestamp)),
-        syncedAt: Timestamp.now()
-      });
-
-      return res.json({
-        success: true,
-        accepted: false,
-        reason: metalCheck.reason,
-        message: metalCheck.reason,
-        transactionId: transactionRef.id
-      });
-    }
-
-    // Paper is valid! Calculate points
-    const pointsAwarded = calculatePoints(weight);
+    // Calculate points based on paper count
+    const pointsAwarded = calculatePoints(paperCount);
 
     // Create successful transaction record
     const transactionRef = await addDoc(collection(db, "transactions"), {
       userId: userId,
       rfidTag: rfidTag,
       machineId: machineId,
-      weight: weight,
-      weightUnit: "grams",
-      weightValid: true,
-      metalDetected: false,
+      paperCount: paperCount,
       pointsAwarded: pointsAwarded,
       status: "completed",
       rejectionReason: null,
@@ -245,7 +204,7 @@ export const submitTransaction = async (req, res) => {
     // Update user statistics
     await updateDoc(doc(db, "users", userId), {
       currentPoints: increment(pointsAwarded),
-      totalPaperRecycled: increment(weight),
+      totalPaperRecycled: increment(paperCount),  // Count papers instead of weight
       totalTransactions: increment(1),
       lastTransactionAt: Timestamp.now()
     });
@@ -255,6 +214,35 @@ export const submitTransaction = async (req, res) => {
     const updatedUserData = updatedUserDoc.data();
     const newTotalPoints = updatedUserData.currentPoints || 0;
 
+    // Emit real-time transaction update to the user
+    try {
+      const io = req.app?.locals?.io;
+      if (io) {
+        // Emit to user's room
+        io.to(`user:${userId}`).emit("transaction:new", {
+          transactionId: transactionRef.id,
+          userId: userId,
+          paperCount: paperCount,
+          pointsAwarded: pointsAwarded,
+          totalPoints: newTotalPoints,
+          status: "completed",
+          timestamp: new Date().toISOString()
+        });
+        
+        // Also emit stats update
+        io.to(`user:${userId}`).emit("stats:update", {
+          currentPoints: newTotalPoints,
+          totalPaperRecycled: updatedUserData.totalPaperRecycled || 0,
+          totalTransactions: updatedUserData.totalTransactions || 0
+        });
+        
+        console.log(`[Socket] Emitted transaction:new to user:${userId}`);
+      }
+    } catch (socketError) {
+      console.error("Error emitting socket event:", socketError);
+      // Don't fail the transaction if socket emit fails
+    }
+
     return res.json({
       success: true,
       accepted: true,
@@ -262,7 +250,7 @@ export const submitTransaction = async (req, res) => {
         id: transactionRef.id,
         pointsAwarded: pointsAwarded,
         totalPoints: newTotalPoints,
-        weight: weight,
+        paperCount: paperCount,
         message: `Paper accepted! +${pointsAwarded} point${pointsAwarded > 1 ? 's' : ''}. Total: ${newTotalPoints}`
       }
     });
@@ -601,7 +589,7 @@ export const getUserTransactions = async (req, res) => {
  * Submit a redemption request (web dashboard)
  * Deducts points and creates redemption record
  *
- * @param {string} req.body.rewardType - Type of reward (bond_paper_1, bond_paper_5, notebook)
+ * @param {string} req.body.rewardType - Type of reward (bond_paper_1, bond_paper_5)
  * @param {number} req.body.pointsCost - Points required for redemption
  * @returns {object} Redemption confirmation
  */
@@ -652,12 +640,12 @@ export const submitRedemption = async (req, res) => {
       });
     }
 
-    // Create redemption record
+    // Create redemption record (will be marked as "completed" after dispensing)
     const redemptionData = {
       userId: userId,
       rewardType: rewardType,
       pointsCost: pointsCost,
-      status: "pending",
+      status: "processing", // Will be "completed" after servo dispenses
       requestedAt: Timestamp.now(),
       dispensedAt: null,
       machineId: null
@@ -672,6 +660,56 @@ export const submitRedemption = async (req, res) => {
       bondsEarned: increment(1)
     });
 
+    // Emit immediate redemption dispense event via Socket.io
+    try {
+      const io = req.app?.locals?.io;
+      console.log(`[Socket] Checking Socket.io availability...`);
+      console.log(`[Socket] req.app exists: ${!!req.app}`);
+      console.log(`[Socket] req.app.locals exists: ${!!req.app?.locals}`);
+      console.log(`[Socket] req.app.locals.io exists: ${!!req.app?.locals?.io}`);
+      
+      if (io) {
+        const redemptionEvent = {
+          redemptionId: redemptionRef.id,
+          rewardType: rewardType,
+          userId: userId,
+          pointsCost: pointsCost
+        };
+        
+        // Emit to all machines in "machines" room
+        io.to("machines").emit("redemption:dispense", redemptionEvent);
+        
+        // Also emit to specific machine room (RPI_001) as backup
+        io.to("machine:RPI_001").emit("redemption:dispense", redemptionEvent);
+        
+        console.log(`[Socket] ✅ Emitted immediate redemption dispense: ${redemptionRef.id}`);
+        console.log(`[Socket] Event data:`, JSON.stringify(redemptionEvent));
+        console.log(`[Socket] Emitted to rooms: "machines" and "machine:RPI_001"`);
+        
+        // Log connected machines for debugging
+        const machinesRoom = io.sockets.adapter.rooms.get("machines");
+        const specificRoom = io.sockets.adapter.rooms.get("machine:RPI_001");
+        
+        if (machinesRoom) {
+          console.log(`[Socket] Machines room has ${machinesRoom.size} socket(s)`);
+        } else {
+          console.warn(`[Socket] ⚠️  Machines room is empty - no machines connected!`);
+        }
+        
+        if (specificRoom) {
+          console.log(`[Socket] Machine:RPI_001 room has ${specificRoom.size} socket(s)`);
+        } else {
+          console.warn(`[Socket] ⚠️  Machine:RPI_001 room is empty`);
+        }
+      } else {
+        console.warn("[Socket] ⚠️  Socket.io not available (req.app?.locals?.io is null) - redemption will be processed via polling");
+      }
+    } catch (socketError) {
+      console.error("[Socket] ❌ Error emitting redemption event:", socketError);
+      console.error("[Socket] Error stack:", socketError.stack);
+      // Don't fail the redemption if socket emit fails - polling will handle it
+    }
+
     return res.json({
       success: true,
       message: "Redemption request submitted successfully",
@@ -680,15 +718,22 @@ export const submitRedemption = async (req, res) => {
         rewardType: rewardType,
         pointsDeducted: pointsCost,
         remainingPoints: newPoints,
-        status: "pending"
+        status: "processing" // Changed from "pending" - will be "completed" after dispensing
       }
     });
 
   } catch (error) {
     console.error("Error submitting redemption:", error);
+    console.error("Error stack:", error.stack);
+    console.error("Error details:", {
+      message: error.message,
+      code: error.code,
+      name: error.name
+    });
     return res.status(500).json({
       success: false,
-      message: "Server error processing redemption"
+      message: "Server error processing redemption",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -746,22 +791,63 @@ export const markRedemptionDispensed = async (req, res) => {
 export const getPendingRedemptions = async (req, res) => {
   try {
     const redemptionsRef = collection(db, "redemptions");
-    const q = query(
-      redemptionsRef,
-      where("status", "==", "pending"),
-      orderBy("requestedAt", "asc"),
-      limit(10)
-    );
+    
+    // Try query with orderBy (requires index)
+    let querySnapshot;
+    let redemptions = [];
+    
+    try {
+      // Check for "processing" status (immediate redemption flow)
+      // Polling serves as backup if Socket.io fails
+      const q = query(
+        redemptionsRef,
+        where("status", "==", "processing"),
+        orderBy("requestedAt", "asc"),
+        limit(10)
+      );
 
-    const querySnapshot = await getDocs(q);
-    const redemptions = [];
-
-    querySnapshot.forEach((doc) => {
-      redemptions.push({
-        id: doc.id,
-        ...doc.data()
+      querySnapshot = await getDocs(q);
+      querySnapshot.forEach((doc) => {
+        redemptions.push({
+          id: doc.id,
+          ...doc.data()
+        });
       });
-    });
+    } catch (queryError) {
+      // Fallback: If index is missing, fetch more documents and sort in memory
+      console.warn("[REDEMPTION] Composite query index missing, fetching all redemptions and sorting in memory");
+      console.warn("[REDEMPTION] Error:", queryError.message);
+      
+      // Fetch all redemptions with "processing" status (no orderBy)
+      const fallbackQuery = query(
+        redemptionsRef,
+        where("status", "==", "processing"),
+        limit(50) // Fetch more to ensure we get all processing redemptions
+      );
+      
+      querySnapshot = await getDocs(fallbackQuery);
+      
+      // Sort in memory by requestedAt
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        redemptions.push({
+          id: doc.id,
+          ...data
+        });
+      });
+      
+      // Sort by requestedAt ascending (oldest first - FIFO)
+      redemptions.sort((a, b) => {
+        const aTime = a.requestedAt?.toMillis?.() || a.requestedAt?.seconds || 0;
+        const bTime = b.requestedAt?.toMillis?.() || b.requestedAt?.seconds || 0;
+        return aTime - bTime;
+      });
+      
+      // Limit to 10 after sorting
+      redemptions = redemptions.slice(0, 10);
+      
+      console.log(`[REDEMPTION] Fetched ${redemptions.length} redemptions (sorted in memory)`);
+    }
 
     return res.json({
       success: true,
@@ -771,9 +857,16 @@ export const getPendingRedemptions = async (req, res) => {
 
   } catch (error) {
     console.error("Error fetching pending redemptions:", error);
+    console.error("Error stack:", error.stack);
+    console.error("Error details:", {
+      message: error.message,
+      code: error.code,
+      name: error.name
+    });
     return res.status(500).json({
       success: false,
-      message: "Server error fetching redemptions"
+      message: "Server error fetching redemptions",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

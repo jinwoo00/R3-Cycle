@@ -51,8 +51,9 @@ def create_database():
             email TEXT,
             rfid_tag TEXT UNIQUE,
             current_points INTEGER DEFAULT 0,
-            total_weight REAL DEFAULT 0,
-            is_active INTEGER DEFAULT 1,
+            total_paper_recycled INTEGER DEFAULT 0,
+            total_transactions INTEGER DEFAULT 0,
+            bonds_earned INTEGER DEFAULT 0,
             last_synced INTEGER,
             created_at INTEGER,
             updated_at INTEGER
@@ -73,23 +74,25 @@ def create_database():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS pending_transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
             rfid_tag TEXT NOT NULL,
-            paper_count INTEGER NOT NULL DEFAULT 1,
-            points_earned INTEGER DEFAULT 0,
+            weight REAL NOT NULL,
+            metal_detected INTEGER NOT NULL,
+            points_awarded INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'completed',
+            rejection_reason TEXT,
             timestamp INTEGER NOT NULL,
-            sync_status TEXT DEFAULT 'pending',
-            retry_count INTEGER DEFAULT 0,
-            last_error TEXT,
-            backend_transaction_id TEXT,
-            synced_at INTEGER,
+            synced INTEGER DEFAULT 0,
+            sync_attempts INTEGER DEFAULT 0,
+            last_sync_attempt INTEGER,
             created_at INTEGER NOT NULL
         )
     ''')
 
     # Index for sync queries
     cursor.execute('''
-        CREATE INDEX IF NOT EXISTS idx_sync_status
-        ON pending_transactions(sync_status, created_at)
+        CREATE INDEX IF NOT EXISTS idx_synced
+        ON pending_transactions(synced, sync_attempts)
     ''')
 
     print("   ✓ pending_transactions table created")
@@ -101,20 +104,20 @@ def create_database():
         CREATE TABLE IF NOT EXISTS pending_redemptions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id TEXT NOT NULL,
-            rfid_tag TEXT NOT NULL,
             reward_type TEXT NOT NULL,
             points_cost INTEGER NOT NULL,
             timestamp INTEGER NOT NULL,
-            dispensed INTEGER DEFAULT 0,
-            dispensed_at INTEGER,
+            synced INTEGER DEFAULT 0,
+            sync_attempts INTEGER DEFAULT 0,
+            last_sync_attempt INTEGER,
             created_at INTEGER NOT NULL
         )
     ''')
 
-    # Index for dispensed queries
+    # Index for sync queries
     cursor.execute('''
-        CREATE INDEX IF NOT EXISTS idx_redemptions_dispensed
-        ON pending_redemptions(dispensed, created_at)
+        CREATE INDEX IF NOT EXISTS idx_redemptions_synced
+        ON pending_redemptions(synced, sync_attempts)
     ''')
 
     print("   ✓ pending_redemptions table created")
@@ -126,8 +129,9 @@ def create_database():
         CREATE TABLE IF NOT EXISTS sync_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             sync_type TEXT NOT NULL,
-            success INTEGER NOT NULL,
-            records_synced INTEGER DEFAULT 0,
+            status TEXT NOT NULL,
+            items_synced INTEGER DEFAULT 0,
+            items_failed INTEGER DEFAULT 0,
             error_message TEXT,
             timestamp INTEGER NOT NULL
         )

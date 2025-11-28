@@ -329,8 +329,8 @@ export const getSystemStats = async (req, res) => {
           growth: growth.transactions
         },
         paper: {
-          totalRecycled: totalPaperRecycled,
-          unit: "grams",
+          totalRecycled: totalPaperRecycled,  // Paper count (not grams)
+          unit: "papers",
           growth: growth.paper
         },
         rewards: {

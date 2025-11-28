@@ -125,9 +125,9 @@ class SyncManager:
             if rfid_tag:
                 # Sync specific user
                 print(f"[SYNC] Syncing user: {rfid_tag}")
-                success, response = self.api.verify_rfid(rfid_tag)
+                response = self.api.verify_rfid(rfid_tag)
 
-                if success and response and response.get('valid'):
+                if response and response.get('valid'):
                     user_data = response.get('user', {})
                     user_data['rfid_tag'] = rfid_tag  # Add RFID tag
 
@@ -204,7 +204,8 @@ class SyncManager:
                 # Submit transaction to backend
                 result = self.api.submit_transaction(
                     rfid_tag=transaction['rfid_tag'],
-                    paper_count=transaction.get('paper_count', 1)  # Default to 1 if not present (backward compatibility)
+                    weight=transaction['weight'],
+                    metal_detected=transaction['metal_detected']
                 )
 
                 if result and result.get('accepted'):
@@ -262,7 +263,8 @@ class SyncManager:
         try:
             result = self.api.submit_transaction(
                 rfid_tag=transaction['rfid_tag'],
-                paper_count=transaction.get('paper_count', 1)  # Default to 1 if not present (backward compatibility)
+                weight=transaction['weight'],
+                metal_detected=transaction['metal_detected']
             )
 
             if result and result.get('accepted'):
@@ -463,9 +465,9 @@ class SyncManager:
         if self.check_network_status():
             try:
                 print(f"[SYNC] Verifying user online: {rfid_tag}")
-                success, result = self.api.verify_rfid(rfid_tag)
+                result = self.api.verify_rfid(rfid_tag)
 
-                if success and result and result.get('valid'):
+                if result and result.get('valid'):
                     user_data = result.get('user', {})
                     user_data['rfid_tag'] = rfid_tag
 
@@ -499,24 +501,26 @@ class SyncManager:
             print(f"[SYNC] User not found in cache: {rfid_tag}")
             return False, None
 
-    def smart_submit_transaction(self, rfid_tag: str, paper_count: int) -> Tuple[bool, Dict]:
+    def smart_submit_transaction(self, rfid_tag: str, weight: float,
+                                 metal_detected: bool) -> Tuple[bool, Dict]:
         """
         Submit transaction - tries backend first, queues if offline
 
         Args:
             rfid_tag: User's RFID tag
-            paper_count: Number of papers inserted
+            weight: Paper weight in grams
+            metal_detected: Whether metal was detected
 
         Returns:
             Tuple of (accepted, result_data)
         """
-        # Calculate points based on paper count
-        import config
-        points_earned = int(paper_count * config.POINTS_PER_PAPER)
+        # Calculate points
+        points_earned = int(weight * 10)  # 10 points per gram
 
         transaction_data = {
             'rfid_tag': rfid_tag,
-            'paper_count': paper_count,
+            'weight': weight,
+            'metal_detected': metal_detected,
             'points_earned': points_earned,
             'timestamp': datetime.now().isoformat()
         }
@@ -524,8 +528,8 @@ class SyncManager:
         # Try backend first if online
         if self.check_network_status():
             try:
-                print(f"[SYNC] Submitting transaction online: {paper_count} paper(s)")
-                result = self.api.submit_transaction(rfid_tag, paper_count)
+                print(f"[SYNC] Submitting transaction online: {weight}g")
+                result = self.api.submit_transaction(rfid_tag, weight, metal_detected)
 
                 if result and result.get('accepted'):
                     print(f"[SYNC] Transaction accepted online")
@@ -547,7 +551,7 @@ class SyncManager:
                 # Fall through to offline queueing
 
         # Queue for offline sync
-        print(f"[SYNC] Queueing transaction offline: {paper_count} paper(s)")
+        print(f"[SYNC] Queueing transaction offline: {weight}g")
         transaction_id = self.db.queue_transaction(transaction_data)
 
         if transaction_id:
@@ -599,9 +603,8 @@ if __name__ == "__main__":
         def verify_rfid(self, rfid_tag):
             return {'valid': True, 'user': {'user_id': '123', 'name': 'Test User', 'current_points': 100}}
 
-        def submit_transaction(self, rfid_tag, paper_count):
-            import config
-            return {'accepted': True, 'transactionId': 'TX123', 'points_earned': int(paper_count * config.POINTS_PER_PAPER)}
+        def submit_transaction(self, rfid_tag, weight, metal_detected):
+            return {'accepted': True, 'transactionId': 'TX123', 'points_earned': int(weight * 10)}
 
     api = MockAPIClient()
     sync = SyncManager(db, api)

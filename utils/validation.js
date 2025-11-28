@@ -87,43 +87,26 @@ export function checkMetalDetection(metalDetected) {
 }
 
 /**
- * Calculates points to award based on paper weight
- * Current system: 1 point per valid paper (flat rate)
- * Future: Can be modified to weight-based calculation
+ * Calculates points to award based on paper count
+ * Current system: 10 points per paper
  *
- * @param {number} weight - Weight in grams
+ * @param {number} paperCount - Number of papers inserted
  * @returns {number} Points to award
  *
  * @example
- * calculatePoints(5.2)   // 1
- * calculatePoints(12.5)  // 1
- *
- * // Future weight-based example (commented out):
- * // if (weight >= 1 && weight <= 5) return 1;
- * // if (weight > 5 && weight <= 10) return 2;
- * // if (weight > 10 && weight <= 20) return 3;
+ * calculatePoints(1)   // 10
+ * calculatePoints(3)   // 30
  */
-export function calculatePoints(weight) {
-  // Validate weight first
-  const validation = validatePaperWeight(weight);
+export function calculatePoints(paperCount) {
+  const POINTS_PER_PAPER = 10;  // Points per paper (matches Raspberry Pi config)
 
-  if (!validation.valid) {
-    return 0;  // No points for invalid weight
+  // Validate paper count
+  if (typeof paperCount !== 'number' || paperCount < 1 || paperCount > 50) {
+    return 0;  // No points for invalid count
   }
 
-  // Current reward system: Flat 1 point per paper
-  return 1;
-
-  /* Future weight-based system (commented for reference):
-  if (weight >= 1 && weight <= 5) {
-    return 1;  // Light paper (1-5g)
-  } else if (weight > 5 && weight <= 10) {
-    return 2;  // Medium paper (5-10g)
-  } else if (weight > 10 && weight <= 20) {
-    return 3;  // Heavy paper (10-20g)
-  }
-  return 0;
-  */
+  // Calculate points: paperCount × POINTS_PER_PAPER
+  return paperCount * POINTS_PER_PAPER;
 }
 
 /**

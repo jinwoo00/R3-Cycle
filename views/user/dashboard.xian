@@ -62,7 +62,7 @@
             </svg>
           </div>
           <p class="mt-2 text-5xl font-bold text-gray-800">
-            {{stats.totalWeight}} <span class="text-3xl font-medium text-gray-500">grams</span>
+            {{stats.totalPapers}} <span class="text-3xl font-medium text-gray-500">papers</span>
           </p>
           <p class="mt-1 text-sm text-gray-500">Great job!</p>
         </div>
@@ -176,18 +176,18 @@
               <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight (g)</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Papers</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-200">
+              <tbody id="transactionsTableBody" class="divide-y divide-gray-200">
                 
                 <!-- Loop over each transaction -->
                 {{#each transactions}}
                 <tr>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{this.date}}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{this.weight}}g</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{this.paperCount}} <span class="text-gray-500">papers</span></td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">+{{this.points}}</td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm">
                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
@@ -264,10 +264,76 @@
     </div>
   </div>
 
+  <!-- Redemption Confirmation Modal -->
+  <div id="redemptionModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="redemption-modal-title" role="dialog" aria-modal="true">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 transition-opacity" style="background-color: rgba(0, 0, 0, 0.5);" onclick="hideRedemptionModal()"></div>
+
+    <!-- Modal Content -->
+    <div class="relative flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+      <!-- Vertical centering trick -->
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+      <!-- Modal Card -->
+      <div class="inline-block align-bottom bg-white rounded-xl shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div class="bg-white px-6 pt-6 pb-4 sm:p-8">
+          <div class="sm:flex sm:items-start">
+            <!-- Icon -->
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-16 w-16 rounded-full bg-green-100 sm:mx-0 sm:h-12 sm:w-12">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01M12 12v.01M12 12v-2m0 2c1.657 0 3-.895 3-2s-1.343-2-3-2m0 8c-1.11 0-2.08-.402-2.599-1M12 16v.01M12 16v1m0-1v-2m0 0c-1.657 0-3 .895-3 2s1.343 2 3 2m0-8c-1.11 0-2.08.402-2.599-1M12 4v.01M12 4V3" />
+              </svg>
+            </div>
+
+            <!-- Content -->
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+              <h3 class="text-xl font-bold text-gray-900 mb-2" id="redemption-modal-title">
+                Redeem Reward
+              </h3>
+              <div class="mt-2">
+                <p class="text-sm text-gray-600 mb-3">
+                  Confirm your redemption:
+                </p>
+                <div class="bg-gray-50 rounded-lg p-4 mb-3">
+                  <p class="text-base font-semibold text-gray-800">
+                    <span id="redemptionRewardName">Yellow Paper (1 sheet)</span>
+                  </p>
+                  <p class="text-sm text-gray-600 mt-1">
+                    Cost: <span class="font-bold text-green-600"><span id="redemptionPointsCost">20</span> Points</span>
+                  </p>
+                </div>
+                <p class="text-sm text-gray-600">
+                  Your remaining balance will be: <span class="font-bold text-gray-800"><span id="redemptionRemainingPoints">0</span> points</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="bg-gray-50 px-6 py-4 sm:px-8 sm:py-4 sm:flex sm:flex-row-reverse gap-3 rounded-b-xl">
+          <button onclick="confirmRedemption()" id="redemptionConfirmBtn" type="button" class="w-full inline-flex justify-center items-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            Confirm Redeem
+          </button>
+          <button onclick="hideRedemptionModal()" id="redemptionCancelBtn" type="button" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:w-auto sm:text-sm transition-colors">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Socket.io Client -->
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  
   <!-- Logout Modal JavaScript -->
   <script>
-    // User points from server (used for redemption validation)
+    // User data from server
     const userPoints = {{user.points}};
+    const userId = '{{userId}}';
 
     // Disable redeem buttons on page load if insufficient points
     document.addEventListener('DOMContentLoaded', function() {
@@ -309,23 +375,36 @@
 
     // Keyboard accessibility - ESC to close, Enter to confirm
     document.addEventListener('keydown', function(event) {
-      const modal = document.getElementById('logoutModal');
-      if (!modal.classList.contains('hidden')) {
+      const logoutModal = document.getElementById('logoutModal');
+      const redemptionModal = document.getElementById('redemptionModal');
+      
+      // Handle logout modal
+      if (logoutModal && !logoutModal.classList.contains('hidden')) {
         if (event.key === 'Escape') {
           hideLogoutModal();
         } else if (event.key === 'Enter') {
           confirmLogout();
         }
       }
+      
+      // Handle redemption modal
+      if (redemptionModal && !redemptionModal.classList.contains('hidden')) {
+        if (event.key === 'Escape') {
+          hideRedemptionModal();
+        } else if (event.key === 'Enter') {
+          confirmRedemption();
+        }
+      }
     });
 
     // Redemption function
     async function redeemReward(rewardId, pointsCost, rewardName) {
-      // Confirm with user
-      if (!confirm(`Redeem ${rewardName} for ${pointsCost} points?\n\nYour remaining balance will be: ${userPoints - pointsCost} points`)) {
-        return;
-      }
+      // Show custom redemption confirmation modal
+      showRedemptionModal(rewardId, pointsCost, rewardName);
+    }
 
+    // Execute redemption after confirmation
+    async function executeRedemption(rewardId, pointsCost, rewardName) {
       try {
         const response = await fetch('/api/redemption/submit', {
           method: 'POST',
@@ -354,6 +433,49 @@
         console.error('Redemption error:', error);
         showNotification('error', 'Network error. Please check your connection and try again.');
       }
+    }
+
+    // Show redemption confirmation modal
+    function showRedemptionModal(rewardId, pointsCost, rewardName) {
+      const modal = document.getElementById('redemptionModal');
+      const remainingPoints = userPoints - pointsCost;
+      
+      // Update modal content
+      document.getElementById('redemptionRewardName').textContent = rewardName;
+      document.getElementById('redemptionPointsCost').textContent = pointsCost;
+      document.getElementById('redemptionRemainingPoints').textContent = remainingPoints;
+      
+      // Store redemption data for confirmation
+      modal.dataset.rewardId = rewardId;
+      modal.dataset.pointsCost = pointsCost;
+      modal.dataset.rewardName = rewardName;
+      
+      // Show modal
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      
+      // Focus on Cancel button for accessibility
+      setTimeout(() => {
+        modal.querySelector('#redemptionCancelBtn').focus();
+      }, 100);
+    }
+
+    // Hide redemption modal
+    function hideRedemptionModal() {
+      const modal = document.getElementById('redemptionModal');
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    // Confirm redemption
+    function confirmRedemption() {
+      const modal = document.getElementById('redemptionModal');
+      const rewardId = modal.dataset.rewardId;
+      const pointsCost = parseInt(modal.dataset.pointsCost);
+      const rewardName = modal.dataset.rewardName;
+      
+      hideRedemptionModal();
+      executeRedemption(rewardId, pointsCost, rewardName);
     }
 
     // Show notification (toast message)
@@ -393,6 +515,123 @@
         setTimeout(() => notification.remove(), 300);
       }, 5000);
     }
+
+    // ============================================
+    // SOCKET.IO REAL-TIME UPDATES
+    // ============================================
+    
+    let socket = null;
+    
+    // Initialize Socket.io connection
+    function initSocket() {
+      if (!userId || userId === '') {
+        console.warn('[Socket] No userId, skipping Socket.io connection');
+        return;
+      }
+      
+      // Connect to Socket.io server
+      socket = io();
+      
+      socket.on('connect', () => {
+        console.log('[Socket] Connected to server');
+        
+        // Register user with server
+        socket.emit('user:register', { userId: userId });
+      });
+      
+      socket.on('user:register:success', (data) => {
+        console.log('[Socket] User registered successfully:', data);
+      });
+      
+      socket.on('user:register:error', (error) => {
+        console.error('[Socket] User registration error:', error);
+      });
+      
+      socket.on('disconnect', () => {
+        console.log('[Socket] Disconnected from server');
+      });
+      
+      // Listen for new transactions
+      socket.on('transaction:new', (data) => {
+        console.log('[Socket] New transaction received:', data);
+        
+        // Format date
+        const date = new Date(data.timestamp);
+        const dateStr = date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        });
+        
+        // Add transaction to table (at the top)
+        const tbody = document.getElementById('transactionsTableBody');
+        if (tbody) {
+          // Remove "no transactions" message if present
+          const emptyRow = tbody.querySelector('td[colspan="4"]');
+          if (emptyRow) {
+            emptyRow.closest('tr').remove();
+          }
+          
+          // Create new row
+          const newRow = document.createElement('tr');
+          newRow.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${dateStr}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${data.paperCount} <span class="text-gray-500">papers</span></td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">+${data.pointsAwarded}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm">
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                ${data.status}
+              </span>
+            </td>
+          `;
+          
+          // Add animation
+          newRow.style.opacity = '0';
+          newRow.style.transform = 'translateY(-10px)';
+          tbody.insertBefore(newRow, tbody.firstChild);
+          
+          // Animate in
+          setTimeout(() => {
+            newRow.style.transition = 'all 0.3s ease';
+            newRow.style.opacity = '1';
+            newRow.style.transform = 'translateY(0)';
+          }, 10);
+          
+          // Show notification
+          showNotification('success', `New transaction! ${data.paperCount} paper(s) recycled for +${data.pointsAwarded} points.`);
+        }
+      });
+      
+      // Listen for stats updates
+      socket.on('stats:update', (data) => {
+        console.log('[Socket] Stats update received:', data);
+        
+        // Update points display
+        const pointsElement = document.querySelector('.text-5xl.font-bold.text-green-600');
+        if (pointsElement) {
+          pointsElement.textContent = data.currentPoints || userPoints;
+        }
+        
+        // Update paper count display
+        const papersElement = document.querySelector('.text-5xl.font-bold.text-gray-800');
+        if (papersElement && data.totalPaperRecycled) {
+          papersElement.textContent = Math.floor(data.totalPaperRecycled) + ' ';
+        }
+        
+        // Update userPoints variable
+        if (data.currentPoints !== undefined) {
+          userPoints = data.currentPoints;
+        }
+      });
+    }
+    
+    // Initialize Socket.io on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      initSocket();
+    });
   </script>
 
 </body>

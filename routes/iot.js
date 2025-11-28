@@ -255,6 +255,57 @@ router.get("/health", (req, res) => {
   });
 });
 
+/**
+ * GET /api/rfid/check
+ * Check if RFID tag is already registered
+ * Used by registration form to validate RFID before submission
+ * No authentication required
+ */
+router.get("/rfid/check", async (req, res) => {
+  try {
+    const { rfidTag } = req.query;
+
+    if (!rfidTag) {
+      return res.status(400).json({
+        success: false,
+        exists: false,
+        message: "RFID tag is required"
+      });
+    }
+
+    // Import Firestore functions
+    const { collection, query, where, getDocs } = await import("firebase/firestore");
+    const { db } = await import("../models/firebaseConfig.js");
+
+    // Check if RFID exists in database
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("rfidTag", "==", rfidTag));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      return res.json({
+        success: true,
+        exists: true,
+        message: "This RFID card is already registered"
+      });
+    }
+
+    return res.json({
+      success: true,
+      exists: false,
+      message: "RFID card is available for registration"
+    });
+
+  } catch (error) {
+    console.error("Error checking RFID:", error);
+    return res.status(500).json({
+      success: false,
+      exists: false,
+      message: "Server error checking RFID"
+    });
+  }
+});
+
 // ============================================
 // 404 HANDLER FOR /api/* ROUTES
 // ============================================

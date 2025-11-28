@@ -24,6 +24,7 @@
     */
     
 import express from "express";
+import http from "http";
 import path from "path";
 import session from "express-session";
 import flash from "connect-flash";
@@ -33,12 +34,17 @@ import fs from 'fs';
 import hbs from "hbs";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { initializeSocket } from "./socket/socketServer.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
+
+// Initialize Socket.io for real-time communication
+const io = initializeSocket(server);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -78,6 +84,34 @@ app.use((req, res, next) => {
 
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "xian");
+
+// Register Handlebars helpers
+hbs.registerHelper("substring", function(str, start, length) {
+  if (!str) return "";
+  str = String(str);
+  
+  // Handle negative start (from the end)
+  if (start < 0) {
+    if (length) {
+      // If length is provided, take that many characters from the end
+      // start=-4 means last 4 characters
+      return str.slice(start);
+    }
+    // Just return from start position to end
+    return str.slice(start);
+  }
+  
+  // Positive start
+  if (length && length > 0) {
+    return str.substring(start, start + length);
+  } else if (length && length < 0) {
+    // Negative length means end position from the end
+    return str.substring(start, str.length + length);
+  }
+  
+  return str.substring(start);
+});
+
 const partialsDir = path.join(__dirname, "views/partials");
 fs.readdir(partialsDir, (err, files) => {
   if (err) {
@@ -110,6 +144,13 @@ app.use("/api", iotRouter);
 
 export default app;
 
+// Make io available to routes if needed
+app.locals.io = io;
+
 if (!process.env.ELECTRON) {
-  app.listen(PORT, () => console.log(`🔥 XianFire running at http://localhost:${PORT}`));
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`🔥 XianFire running at http://0.0.0.0:${PORT}`);
+    console.log(`🔌 Socket.io server ready for real-time connections`);
+    console.log(`🌐 Access from network: http://192.168.1.18:${PORT}`);
+  });
 }

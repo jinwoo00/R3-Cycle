@@ -1,0 +1,65 @@
+﻿# ONE-CLICK SETUP GUIDE
+
+## Step 1: Prepare on Windows (You are here!)
+
+This script has created:
+- Deployment package: raspberry_pi_deploy_20251124_151907
+- ZIP archive: raspberry_pi_deploy_20251124_151907.zip
+- Setup script for Raspberry Pi: raspberry_pi_deploy_20251124_151907\setup.sh
+
+## Step 2: Transfer to Raspberry Pi
+
+### Method A: USB Drive (Recommended)
+1. Copy raspberry_pi_deploy_20251124_151907.zip to USB drive
+2. Insert USB into Raspberry Pi
+3. Extract: unzip raspberry_pi_deploy_20251124_151907.zip -d /home/pi
+4. Run: cd /home/pi/raspberry_pi_deploy_20251124_151907 && sudo bash setup.sh
+
+### Method B: Network Transfer
+From PowerShell (if Pi IP known):
+`powershell
+.\transfer_to_pi.ps1
+`
+
+Or manually:
+`powershell
+scp -r raspberry_pi_deploy_20251124_151907 pi@<PI_IP>:/home/pi/r3cycle
+`
+
+### Method C: Manual Copy
+- Copy folder to Raspberry Pi via any method
+- Extract files to /home/pi/r3cycle
+
+## Step 3: Run Setup on Raspberry Pi
+
+`ash
+cd /home/pi/r3cycle
+sudo bash setup.sh
+sudo reboot
+`
+
+## Step 4: After Reboot
+
+1. Edit config.py:
+   `ash
+   nano config.py
+   # Change: API_BASE_URL = "http://YOUR_BACKEND_IP:3000/api"
+   `
+
+2. Test connection:
+   `ash
+   python3 tests/test_api.py
+   `
+
+3. Test hardware:
+   `ash
+   sudo python3 tests/run_all_tests.py
+   `
+
+4. Run system:
+   `ash
+   sudo python3 main.py
+   `
+
+## That's it! Ready to deploy.
+

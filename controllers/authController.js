@@ -30,7 +30,7 @@ import {
   signInWithEmailAndPassword,
   signOut
 } from "firebase/auth";
-import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 import crypto from "crypto";
 import { sendVerificationCodeEmail as sendCodeEmail } from "../models/emailConfig.js";
 
@@ -98,8 +98,23 @@ export const dashboardPage = async (req, res) => {
     if (userDoc.exists()) {
       const userData = userDoc.data();
 
-      // Check if email is verified
-      const emailVerified = currentUser ? currentUser.emailVerified : false;
+      // Check if email is verified (reload user to get fresh status)
+      let emailVerified = false;
+      if (currentUser) {
+        await currentUser.reload();
+        emailVerified = currentUser.emailVerified;
+      }
+
+      // If email is verified but initialEmailVerificationComplete is false, update it
+      if (emailVerified && !userData.initialEmailVerificationComplete) {
+        console.log("✅ Email verified - updating initialEmailVerificationComplete flag");
+        await updateDoc(doc(db, "users", req.session.userId), {
+          emailVerified: true,
+          emailVerifiedAt: new Date(),
+          initialEmailVerificationComplete: true
+        });
+        console.log("✅ Flag updated successfully");
+      }
 
       // Redirect to verification page if email is not verified
       if (!emailVerified) {
@@ -120,17 +135,156 @@ export const dashboardPage = async (req, res) => {
       };
 
       // Prepare stats with defaults
+      // Note: totalPaperRecycled now stores paper count (not grams)
+      // If totalPaperRecycled is missing or 0, calculate from transactions
+      let totalPapers = Math.floor(userData.totalPaperRecycled || 0);
+      
+      // If no paper count yet, try to calculate from transactions collection
+      if (totalPapers === 0) {
+        try {
+          const transactionsRef = collection(db, "transactions");
+          const q = query(
+            transactionsRef,
+            where("userId", "==", req.session.userId),
+            where("status", "==", "completed")
+          );
+          const transactionsSnapshot = await getDocs(q);
+          
+          let calculatedPapers = 0;
+          transactionsSnapshot.forEach((doc) => {
+            const txData = doc.data();
+            // Check if transaction has paperCount (new schema) or weight (old schema)
+            if (txData.paperCount) {
+              calculatedPapers += txData.paperCount;
+            } else if (txData.weight) {
+              // Old schema - assume 1 paper per transaction (rough estimate)
+              calculatedPapers += 1;
+            }
+          });
+          
+          if (calculatedPapers > 0) {
+            totalPapers = calculatedPapers;
+            // Update user's totalPaperRecycled for future use
+            await updateDoc(doc(db, "users", req.session.userId), {
+              totalPaperRecycled: calculatedPapers
+            });
+          }
+        } catch (error) {
+          console.error("Error calculating papers from transactions:", error);
+        }
+      }
+      
       const stats = {
-        totalWeight: userData.totalPaperRecycled || 0,
+        totalPapers: totalPapers,
         totalRedeemed: userData.bondsEarned || 0
       };
+      
+      console.log(`[DASHBOARD] User ${req.session.userId}: totalPapers=${totalPapers}, totalPaperRecycled=${userData.totalPaperRecycled}`);
 
       // Mock rewards data (will be replaced with real data in Phase 3)
       const rewards = [
-        { name: "Bond Paper (1 sheet)", cost: 20 },
-        { name: "Bond Paper (5 sheets)", cost: 100 },
-        { name: "Notebook", cost: 200 }
+        { name: "Yellow Paper (1 sheet)", cost: 20 },
+        { name: "Yellow Paper (5 sheets)", cost: 100 }
       ];
+
+      // Fetch user transactions for transaction history
+      let transactions = [];
+      try {
+        const transactionsRef = collection(db, "transactions");
+        
+        // Try composite query first (requires index)
+        try {
+          const transactionsQuery = query(
+            transactionsRef,
+            where("userId", "==", req.session.userId),
+            orderBy("timestamp", "desc"),
+            limit(50) // Show last 50 transactions
+          );
+          
+          const transactionsSnapshot = await getDocs(transactionsQuery);
+          
+          transactions = transactionsSnapshot.docs.map((doc) => {
+            const txData = doc.data();
+            const timestamp = txData.timestamp?.toDate() || new Date();
+            
+            // Format date for display
+            const dateStr = timestamp.toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            });
+            
+            return {
+              id: doc.id,
+              date: dateStr,
+              paperCount: txData.paperCount || 0, // New schema: paperCount
+              points: txData.pointsAwarded || 0, // Field name is pointsAwarded
+              status: txData.status || 'completed'
+            };
+          });
+          
+          console.log(`[DASHBOARD] Fetched ${transactions.length} transactions for user ${req.session.userId}`);
+        } catch (queryError) {
+          // If composite query fails (index missing), fetch all and sort in memory
+          if (queryError.code === 'failed-precondition' || queryError.message?.includes('index')) {
+            console.warn(`[DASHBOARD] Composite query index missing, fetching all transactions and sorting in memory`);
+            
+            const allTransactionsQuery = query(
+              transactionsRef,
+              where("userId", "==", req.session.userId),
+              limit(200) // Fetch more to sort in memory
+            );
+            
+            const allSnapshot = await getDocs(allTransactionsQuery);
+            
+            transactions = allSnapshot.docs
+              .map((doc) => {
+                const txData = doc.data();
+                const timestamp = txData.timestamp?.toDate() || new Date();
+                
+                return {
+                  id: doc.id,
+                  timestamp: timestamp,
+                  paperCount: txData.paperCount || 0,
+                  points: txData.pointsAwarded || 0,
+                  status: txData.status || 'completed'
+                };
+              })
+              .sort((a, b) => b.timestamp - a.timestamp) // Sort descending by timestamp
+              .slice(0, 50) // Limit to 50 most recent
+              .map((tx) => {
+                // Format date for display
+                const dateStr = tx.timestamp.toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                });
+                
+                return {
+                  id: tx.id,
+                  date: dateStr,
+                  paperCount: tx.paperCount,
+                  points: tx.points,
+                  status: tx.status
+                };
+              });
+            
+            console.log(`[DASHBOARD] Fetched ${transactions.length} transactions (sorted in memory) for user ${req.session.userId}`);
+          } else {
+            throw queryError; // Re-throw if it's a different error
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching transactions for dashboard:", error);
+        console.error("Error details:", error.code, error.message);
+        // Continue with empty transactions array if fetch fails
+      }
 
       res.render("user/dashboard", {
         title: "Dashboard",
@@ -140,7 +294,9 @@ export const dashboardPage = async (req, res) => {
         userFirstName: firstName,
         user: user,
         stats: stats,
-        rewards: rewards
+        rewards: rewards,
+        transactions: transactions,
+        userId: req.session.userId // Pass userId for Socket.io
       });
     } else {
       res.redirect("/login");
@@ -279,21 +435,53 @@ export const loginUser = async (req, res) => {
 
 
 export const registerUser = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, rfidTag } = req.body;
   try {
+    // Validate RFID if provided
+    if (rfidTag) {
+      // Check if RFID is already registered
+      const { validateRfidTag } = await import("../utils/validation.js");
+      const rfidValidation = validateRfidTag(rfidTag);
+      
+      if (!rfidValidation.valid) {
+        req.flash("error_msg", rfidValidation.reason);
+        return res.redirect("/register");
+      }
+
+      // Check for duplicate RFID
+      const { collection, query: firestoreQuery, where, getDocs } = await import("firebase/firestore");
+      const usersRef = collection(db, "users");
+      const q = firestoreQuery(usersRef, where("rfidTag", "==", rfidTag));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        req.flash("error_msg", "This RFID card is already registered. Please use a different card or login instead.");
+        return res.redirect("/register");
+      }
+    } else {
+      req.flash("error_msg", "RFID card is required for registration. Please scan your card.");
+      return res.redirect("/register");
+    }
+
     // Create user account
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Save user info to Firestore
+    // Save user info to Firestore with RFID
+    const { Timestamp } = await import("firebase/firestore");
     await setDoc(doc(db, "users", user.uid), {
       name,
       email,
       role: role || "user",
+      rfidTag: rfidTag,
+      rfidRegisteredAt: Timestamp.now(),
       emailVerified: false,
       initialEmailVerificationComplete: false,  // Track if they completed first-time verification
-      createdAt: new Date(),
-      lastVerificationSent: new Date()
+      createdAt: Timestamp.now(),
+      lastVerificationSent: Timestamp.now(),
+      currentPoints: 0,
+      totalPaperRecycled: 0,
+      totalTransactions: 0
     });
 
     // Send verification email
